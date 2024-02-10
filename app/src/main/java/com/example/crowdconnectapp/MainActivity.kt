@@ -40,7 +40,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun App() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "welcomeScreen") {
+    NavHost(navController = navController, startDestination = "organizeQuizScreen") {
         composable(route = "welcomeScreen") {
             WelcomeScreen(navController)
         }
