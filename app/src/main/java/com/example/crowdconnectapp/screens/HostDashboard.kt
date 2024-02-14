@@ -85,6 +85,7 @@ fun SessionCard(session: Session, navController: NavHostController) {
             when (session.id) {
                 "1" -> navController.navigate("organizeQuizScreen")
                 "2" -> navController.navigate("organizePollScreen")
+                "3" -> navController.navigate("organizeVotingScreen")
             }
         },
         modifier = Modifier
