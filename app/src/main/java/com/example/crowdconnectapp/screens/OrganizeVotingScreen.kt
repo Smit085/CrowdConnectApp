@@ -2,17 +2,15 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import java.text.SimpleDateFormat
-import java.util.Date
+import com.example.crowdconnectapp.components.convertLongToTime
+import com.example.crowdconnectapp.components.customDatePicker
 
 @Preview
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -20,79 +18,40 @@ import java.util.Date
 @Composable
 fun OrganizeVotingScreen() {
     var isScheduleSessionEnabled by remember { mutableStateOf(false) }
-    var selectedDate by remember { mutableStateOf("") }
+    var selectedDate by remember { mutableStateOf(convertLongToTime(System.currentTimeMillis())) }
     var showDialog by remember { mutableStateOf(false) }
     var dateResult by remember { mutableStateOf("Date Picker") }
-    val datePickerState = rememberDatePickerState()
-    val confirmEnabled by remember { derivedStateOf { true } }
 
     Column {
         Switch(
-            checked = isScheduleSessionEnabled,
-            onCheckedChange = { isChecked ->
+            checked = isScheduleSessionEnabled, onCheckedChange = { isChecked ->
                 isScheduleSessionEnabled = isChecked
-                // Clear the selected date if schedule session is disabled
-                if (!isChecked) selectedDate = ""
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp, horizontal = 16.dp)
+
+            }, modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)
         )
 
-        BasicTextField(
-            value = TextFieldValue(selectedDate),
+        OutlinedTextField(value = selectedDate,
             onValueChange = {
-                selectedDate = it.text
+                selectedDate = it
             },
-            enabled = isScheduleSessionEnabled,
+            enabled = false,
             singleLine = true,
+            readOnly = true,
             modifier = Modifier
-                .clickable {
-                    showDialog = true // Show dialog when clicked
+                .clickable(isScheduleSessionEnabled) {
+                    showDialog = isScheduleSessionEnabled // Show dialog when clicked
                 }
-                .padding(vertical = 8.dp, horizontal = 16.dp),
-            textStyle = TextStyle(color = if (selectedDate.isEmpty()) Color.Gray else Color.Black)
+                .padding(horizontal = 15.dp, vertical = 5.dp)
+                .wrapContentWidth(),
+            textStyle = TextStyle(color = if (isScheduleSessionEnabled) Color.Black else Color.Gray),
+            label = { Text(text = "Date: ", style = TextStyle(color = if (isScheduleSessionEnabled) Color.Black else Color.Gray)) }
         )
 
         if (showDialog) {
-            DatePickerDialog(
-                onDismissRequest = {
-                    showDialog = false
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            showDialog = false
-                            var date = "no selection"
-                            if (datePickerState.selectedDateMillis != null) {
-                                date = convertLongToTime(datePickerState.selectedDateMillis!!)
-                                selectedDate = date
-                            }
-                            dateResult = date
-                        },
-                        enabled = confirmEnabled
-                    ) {
-                        Text("OK")
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = {
-                            showDialog = false
-                        }
-                    ) {
-                        Text("Cancel")
-                    }
-                }
-            ) {
-                DatePicker(state = datePickerState)
-            }
+            val result = customDatePicker(showDialog)
+            showDialog = result.showDialog
+            dateResult = result.dateResult
+            selectedDate = result.selectedDate
         }
     }
-}
-
-fun convertLongToTime(time: Long): String {
-    val date = Date(time)
-    val format = SimpleDateFormat("dd MM yyyy")
-    return format.format(date)
 }

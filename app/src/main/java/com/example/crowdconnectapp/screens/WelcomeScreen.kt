@@ -53,10 +53,16 @@ fun WelcomeScreen(navController: NavHostController) {
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.primary
         )
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = "Join the session or host your own.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        OptionButton("Host") {
+        OptionButton("Get started as a host") {
             // Handle Host button click
             selectedOption = Option.Host
             navController.navigate("hostScreen")
@@ -64,7 +70,7 @@ fun WelcomeScreen(navController: NavHostController) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        OptionButton("Attendee") {
+        OptionButton("Continue as a Attendee") {
             // Handle Attendee button click
             selectedOption = Option.Attendee
             navController.navigate("attendeeScreen")
