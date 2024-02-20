@@ -1,6 +1,7 @@
 package com.example.crowdconnectapp
 
 import OrganizeVotingScreen
+import SimpleTabLayout
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -58,8 +59,11 @@ fun App() {
         composable(route = "organizePollScreen") {
             OrganizePollScreen(navController)
         }
-        composable(route = "organizeVotingScreen") {
-            OrganizeVotingScreen()
+        composable(route = "OrganizeVotingScreen") {
+            OrganizeVotingScreen(navController)
+        }
+        composable(route = "simpleTabLayout") {
+            SimpleTabLayout(navController)
         }
     }
 }

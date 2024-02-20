@@ -16,20 +16,16 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 
-data class Result(
+data class DateResult(
     val showDialog: Boolean,
-    val dateResult: String,
     val selectedDate: String
-
 )
 
 @ExperimentalMaterial3Api
 @ExperimentalLayoutApi
 @Composable
-fun customDatePicker(showDialog: Boolean): Result {
-
+fun customDatePicker(showDialog: Boolean): DateResult {
     var showDialog by remember { mutableStateOf(showDialog) }
-    var dateResult by remember { mutableStateOf("Date Picker") }
     val datePickerState = rememberDatePickerState()
     var selectedDate by remember { mutableStateOf(convertLongToTime(System.currentTimeMillis())) }
 
@@ -40,12 +36,9 @@ fun customDatePicker(showDialog: Boolean): Result {
             TextButton(
                 onClick = {
                     showDialog = false
-                    var date = "no selection"
                     if (datePickerState.selectedDateMillis != null) {
-                        date = convertLongToTime(datePickerState.selectedDateMillis!!)
-                        selectedDate = date
+                        selectedDate = convertLongToTime(datePickerState.selectedDateMillis!!)
                     }
-                    dateResult = date
                 }, enabled = true
             ) {
                 Text("OK")
@@ -60,7 +53,7 @@ fun customDatePicker(showDialog: Boolean): Result {
             DatePicker(state = datePickerState)
         }
     }
-    return Result(showDialog,dateResult,selectedDate)
+    return DateResult(showDialog, selectedDate)
 }
 
 fun convertLongToTime(time: Long): String {
