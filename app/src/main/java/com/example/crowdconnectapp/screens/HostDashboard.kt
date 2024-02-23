@@ -24,7 +24,7 @@ import androidx.navigation.NavHostController
 
 data class Session(val id: String, val name: String)
 
-val Sessions = listOf(
+val sessions = listOf(
     Session("1", "Organize Quiz"),
     Session("2", "Organize Poll"),
     Session("3", "Take Attendance"),
@@ -32,37 +32,30 @@ val Sessions = listOf(
     Session("5", "Share Materials"),
     Session("6", "Collect Assignments"),
     Session("7", "Take Survey/Feedback"),
-    Session("7", "Take Survey/Feedback"),
-    Session("7", "Take Survey/Feedback")
+    Session("8", "Take Survey/Feedback"),
+    Session("9", "Take Survey/Feedback")
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HostDashboard(navController: NavHostController) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        titleContentColor = MaterialTheme.colorScheme.primary,
-                    ),
-                    title = {
-                        Text("Host Dashboard")
-                    }
-                )
-            },
-        ) {
-            Column(modifier = Modifier.padding(it)) {
-                Text(
-                    modifier = Modifier
-                        .padding(16.dp),
-                    text = "Services",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                SessionList(sessions = Sessions,navController)
-            }
+    Scaffold(topBar = {
+        TopAppBar(
+            title = { Text("Host Dashboard") },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                titleContentColor = MaterialTheme.colorScheme.primary,
+            ),
+        )
+    }) {
+        Column(modifier = Modifier.padding(it)) {
+            Text(
+                modifier = Modifier.padding(16.dp),
+                text = "Services",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            SessionList(sessions, navController)
         }
     }
 }
@@ -71,7 +64,7 @@ fun HostDashboard(navController: NavHostController) {
 fun SessionList(sessions: List<Session>, navController: NavHostController) {
     LazyColumn {
         items(sessions) { session ->
-            SessionCard(session = session,navController)
+            SessionCard(session, navController)
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
@@ -92,9 +85,7 @@ fun SessionCard(session: Session, navController: NavHostController) {
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        )
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(10.dp)) {
             Text(

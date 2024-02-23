@@ -1,7 +1,8 @@
 package com.example.crowdconnectapp
 
 import OrganizeVotingScreen
-import SimpleTabLayout
+import QuestionScreen
+import TabLayout
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -23,6 +24,7 @@ import com.example.crowdconnectapp.screens.WelcomeScreen
 import com.example.crowdconnectapp.ui.theme.CrowdConnectAppTheme
 
 class MainActivity : ComponentActivity() {
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -43,7 +45,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun App() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "welcomeScreen") {
+    NavHost(navController = navController, startDestination = "tabLayout") {
         composable(route = "welcomeScreen") {
             WelcomeScreen(navController)
         }
@@ -59,11 +61,14 @@ fun App() {
         composable(route = "organizePollScreen") {
             OrganizePollScreen(navController)
         }
-        composable(route = "OrganizeVotingScreen") {
+        composable(route = "organizeVotingScreen") {
             OrganizeVotingScreen(navController)
         }
-        composable(route = "simpleTabLayout") {
-            SimpleTabLayout(navController)
+        composable(route = "tabLayout") {
+            TabLayout(navController)
+        }
+        composable(route = "questionScreen") {
+            QuestionScreen()
         }
     }
 }

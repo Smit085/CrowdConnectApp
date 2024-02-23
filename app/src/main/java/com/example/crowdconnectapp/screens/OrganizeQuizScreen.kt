@@ -78,31 +78,12 @@ fun App(navController: NavHostController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, vertical = 10.dp)
     ) {
         var title by remember { mutableStateOf("") }
         var description by remember { mutableStateOf("") }
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "Create Quiz", style = MaterialTheme.typography.titleLarge
-            )
-            TextButton(
-                onClick = { navController.navigate("OrganizeVotingScreen")}, // Set contentPadding to remove extra padding
-            ) {
-                Text(
-                    text = "Add Question",
-                    color = Color.Blue
-                )
-            }
 
-        }
         OutlinedTextField(value = title, onValueChange = { text ->
             title = text
         }, label = { Text("Title") }, modifier = Modifier.fillMaxWidth(), maxLines = 1

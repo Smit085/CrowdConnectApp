@@ -39,7 +39,7 @@ fun WelcomeScreen(navController: NavHostController) {
         verticalArrangement = Arrangement.Center
     ) {
         Image(
-            painter = painterResource(id = R.drawable.ic_connect), // Replace with your logo
+            painter = painterResource(id = R.drawable.ic_connect),
             contentDescription = "Logo",
             modifier = Modifier
                 .size(100.dp)
