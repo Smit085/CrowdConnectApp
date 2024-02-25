@@ -1,4 +1,6 @@
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -10,24 +12,37 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.crowdconnectapp.models.Question
+import com.example.crowdconnectapp.models.QuizViewModel
 
-@Preview(showBackground = true)
 @Composable
-fun QuestionScreen() {
+fun CreateQuizQuestions(
+    quizViewModel: QuizViewModel,
+    onQuestionAdded: () -> Unit
+) {
     var question by remember { mutableStateOf("") }
     var options by remember { mutableStateOf(listOf("")) }
     var correctAnswerIndex by remember { mutableIntStateOf(-1) }
     var isDeleteDialogVisible by remember { mutableStateOf(false) }
     var optionToDelete by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .fillMaxSize()
     ) {
-        // TextField for the question
+        Text(
+            text = "Add Your Question",
+            style = MaterialTheme.typography.titleLarge,
+            textAlign = TextAlign.Start,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+        )
         OutlinedTextField(
             value = question,
             onValueChange = { question = it },
@@ -37,7 +52,6 @@ fun QuestionScreen() {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Display options
         Text("Options", style = MaterialTheme.typography.titleSmall)
         options.forEachIndexed { index, option ->
             OptionItem(
@@ -62,7 +76,6 @@ fun QuestionScreen() {
             )
         }
 
-        // Button to add a new option
         IconButton(onClick = {
             if (options.last().isNotBlank()) {
                 options = options.toMutableList().apply { add("") }
@@ -73,19 +86,24 @@ fun QuestionScreen() {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Button to save the question
-        Button(
+        Button(shape = RoundedCornerShape(8.dp),
             onClick = {
-                if (question.isNotBlank() && options.size >= 2 && correctAnswerIndex != -1) {
-                    // Perform save action here
+                if (question.isNotBlank() && options.size >= 3 && options.last() != "" && correctAnswerIndex != -1) {
+                    val newQuestion = Question(question, options, correctAnswerIndex)
+                    quizViewModel.addQuestion(newQuestion)
+                    onQuestionAdded()
+                } else {
+                    Toast.makeText(context, "Please create at least 3 options", Toast.LENGTH_SHORT)
+                        .show()
                 }
             },
-            enabled = question.isNotBlank() && options.size >= 2 && correctAnswerIndex != -1
+            enabled = true
+//            enabled = question.isNotBlank() && options.size >= 3 && correctAnswerIndex != -1
         ) {
-            Text("Save")
+            Text("ADD")
         }
 
-        // Delete option dialog
+
         if (isDeleteDialogVisible) {
             DeleteOptionDialog(
                 option = optionToDelete,
