@@ -1,3 +1,5 @@
+package com.example.crowdconnectapp.screens.quiz
+
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,16 +15,16 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.crowdconnectapp.models.Question
 import com.example.crowdconnectapp.models.QuizViewModel
 
 @Composable
 fun CreateQuizQuestions(
-    quizViewModel: QuizViewModel,
     onQuestionAdded: () -> Unit
 ) {
+    val quizViewModel: QuizViewModel = hiltViewModel()
     var question by remember { mutableStateOf("") }
     var options by remember { mutableStateOf(listOf("")) }
     var correctAnswerIndex by remember { mutableIntStateOf(-1) }

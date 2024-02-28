@@ -106,7 +106,7 @@ fun Picker(
                     style = textStyle,
                     modifier = Modifier
                         .onSizeChanged { size ->
-                            itemHeightPixels.value = size.height
+                            itemHeightPixels.intValue = size.height
                         }
                         .then(textModifier))
             }
@@ -116,14 +116,14 @@ fun Picker(
             color = dividerColor,
             modifier = Modifier
                 .offset(y = itemHeightDp * visibleItemsMiddle)
-                .width(itemHeightDp * visibleItemsMiddle + 4.dp)
+                .width(itemHeightDp * visibleItemsMiddle + 9.dp)
         )
 
         Divider(
             color = dividerColor,
             modifier = Modifier
                 .offset(y = itemHeightDp * (visibleItemsMiddle + 1))
-                .width(itemHeightDp * visibleItemsMiddle + 4.dp)
+                .width(itemHeightDp * visibleItemsMiddle + 9.dp)
         )
     }
 

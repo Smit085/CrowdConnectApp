@@ -1,6 +1,5 @@
 package com.example.crowdconnectapp.screens.quiz
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,10 +18,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -37,13 +36,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crowdconnectapp.components.Picker
 import com.example.crowdconnectapp.components.rememberPickerState
 import androidx.compose.ui.text.TextStyle
-import androidx.navigation.NavHostController
+import com.example.crowdconnectapp.components.LabeledCheckbox
 import com.example.crowdconnectapp.components.customDatePicker
 import com.example.crowdconnectapp.components.customTimePicker
 
@@ -55,7 +55,12 @@ fun ConfigureQuiz() {
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun App() {
-    var isScheduleSessionEnabled by remember { mutableStateOf(false) }
+    var isScheduleEnabled by remember { mutableStateOf(false) }
+    var isDurationEnabled by remember { mutableStateOf(false) }
+    var isTimeoutEnabled by remember { mutableStateOf(false) }
+    var isShuffleQuestionsEnabled by remember { mutableStateOf(false) }
+    var isShuffleOptionsEnabled by remember { mutableStateOf(false) }
+    var isEvaluateEnabled by remember { mutableStateOf(false) }
     var selectedDate by remember { mutableStateOf("") }
     var selectedTime by remember { mutableStateOf("") }
     var showDateDialog by remember { mutableStateOf(false) }
@@ -87,31 +92,33 @@ fun App() {
         )
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp),
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(60.dp)
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            NumberPicker("Duration", listOf("", "sec", "min", ""))
-            NumberPicker("Timeout", listOf("", "sec", "min", "hrs", ""))
+            Text(text = "Schedule Session")
+            Switch(modifier = Modifier.scale(0.8f),
+                checked = isScheduleEnabled,
+                onCheckedChange = { isChecked ->
+                    isScheduleEnabled = isChecked
+                },
+                thumbContent = if (isScheduleEnabled) {
+                    {
+                        Icon(
+                            imageVector = Icons.Filled.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                        )
+                    }
+                } else {
+                    null
+                })
         }
-        Row(modifier = Modifier.fillMaxWidth().padding(end = 5.dp),verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(text = "Schedule Session: ")
-            Switch(checked = isScheduleSessionEnabled, onCheckedChange = { isChecked ->
-                isScheduleSessionEnabled = isChecked
-            }, thumbContent = if (isScheduleSessionEnabled) {
-                {
-                    Icon(
-                        imageVector = Icons.Filled.Check,
-                        contentDescription = null,
-                        modifier = Modifier.size(SwitchDefaults.IconSize),
-                    )
-                }
-            } else {
-                null
-            })
-        }
-        Row(modifier = Modifier.fillMaxWidth(),verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
             OutlinedTextField(value = selectedDate,
                 onValueChange = {
                     selectedDate = it
@@ -120,19 +127,18 @@ fun App() {
                 singleLine = true,
                 readOnly = true,
                 modifier = Modifier
-                    .clickable(isScheduleSessionEnabled) {
-                        showDateDialog = isScheduleSessionEnabled
+                    .clickable(isScheduleEnabled) {
+                        showDateDialog = isScheduleEnabled
                     }
                     .padding(horizontal = 15.dp, vertical = 5.dp)
                     .width(150.dp),
-                textStyle = TextStyle(color = if (isScheduleSessionEnabled) Color.Black else Color.Gray),
+                textStyle = TextStyle(color = if (isScheduleEnabled) Color.Black else Color.Gray),
                 label = {
                     Text(
                         text = "Date: ",
-                        style = TextStyle(color = if (isScheduleSessionEnabled) Color.Black else Color.Gray)
+                        style = TextStyle(color = if (isScheduleEnabled) Color.Black else Color.Gray)
                     )
                 })
-
             if (showDateDialog) {
                 val result = customDatePicker(showDateDialog)
                 showDateDialog = result.showDialog
@@ -146,16 +152,16 @@ fun App() {
                 singleLine = true,
                 readOnly = true,
                 modifier = Modifier
-                    .clickable(isScheduleSessionEnabled) {
-                        showTimeDialog = isScheduleSessionEnabled // Show dialog when clicked
+                    .clickable(isScheduleEnabled) {
+                        showTimeDialog = isScheduleEnabled // Show dialog when clicked
                     }
                     .padding(horizontal = 15.dp, vertical = 5.dp)
                     .width(150.dp),
-                textStyle = TextStyle(color = if (isScheduleSessionEnabled) Color.Black else Color.Gray),
+                textStyle = TextStyle(color = if (isScheduleEnabled) Color.Black else Color.Gray),
                 label = {
                     Text(
                         text = "Time: ",
-                        style = TextStyle(color = if (isScheduleSessionEnabled) Color.Black else Color.Gray)
+                        style = TextStyle(color = if (isScheduleEnabled) Color.Black else Color.Gray)
                     )
                 })
 
@@ -167,47 +173,100 @@ fun App() {
                 }:${result.timeState.minute.toString().padStart(2, '0')}"
             }
         }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = "Duration/Question")
+            Switch(modifier = Modifier.scale(0.8f),
+                checked = isDurationEnabled,
+                onCheckedChange = { isChecked ->
+                    isDurationEnabled = isChecked
+                },
+                thumbContent = if (isDurationEnabled) {
+                    {
+                        Icon(
+                            imageVector = Icons.Filled.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                        )
+                    }
+                } else {
+                    null
+                })
+        }
+        NumberPicker(listOf("", "sec", "min", ""),isDurationEnabled)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = "Session Timeout")
+            Switch(modifier = Modifier.scale(0.8f),
+                checked = isTimeoutEnabled,
+                onCheckedChange = { isChecked ->
+                    isTimeoutEnabled = isChecked
+                },
+                thumbContent = if (isTimeoutEnabled) {
+                    {
+                        Icon(
+                            imageVector = Icons.Filled.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                        )
+                    }
+                } else {
+                    null
+                })
+        }
+        NumberPicker(listOf("", "sec", "min", "hrs", ""),isTimeoutEnabled)
+
+        LabeledCheckbox(text = "Shuffle Questions", isChecked = isShuffleQuestionsEnabled, onCheckedChange = {isShuffleQuestionsEnabled = !isShuffleQuestionsEnabled})
+        LabeledCheckbox(text = "Shuffle Options", isChecked = isShuffleOptionsEnabled, onCheckedChange = {isShuffleOptionsEnabled = !isShuffleOptionsEnabled})
+        LabeledCheckbox(text = "Evaluate", isChecked = isEvaluateEnabled, onCheckedChange = {isEvaluateEnabled = !isEvaluateEnabled})
     }
 }
 
 @Composable
-fun NumberPicker(label: String, units: List<String>) {
-    var number by remember { mutableIntStateOf(0) }
-    Column {
-        Text(
-            text = "$label: ", style = MaterialTheme.typography.bodyLarge
-        )
-        Row(modifier = Modifier.wrapContentSize(), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(
-                onClick = { number = if (number == 0) 0 else number - 10 },
-                modifier = Modifier.width(40.dp)
+fun NumberPicker(units: List<String>, enable: Boolean) {
+    if (enable) {
+        var number by remember { mutableIntStateOf(0) }
+        Column(modifier = Modifier) {
+            Row(
+                modifier = Modifier.wrapContentSize(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = "Minus",
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(50))
-                        .background(Color.LightGray)
-                        .size(25.dp),
-                    tint = Color.Black
-                )
+                IconButton(
+                    onClick = { number = if (number == 0) 0 else number - 10 },
+                    modifier = Modifier.width(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowDown,
+                        contentDescription = "Minus",
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(50))
+                            .size(25.dp),
+                        tint = Color.Black
+                    )
+                }
+                Text(text = "$number")
+                IconButton(onClick = {
+                    number += 10
+                }, modifier = Modifier.width(40.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowUp,
+                        contentDescription = "Add",
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(50))
+                            .size(25.dp),
+                        tint = Color.Black
+                    )
+                }
+                Picker(units)
             }
-            Text(text = "$number")
-            IconButton(onClick = {
-                number += 10
-            }, modifier = Modifier.width(40.dp)) {
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowUp,
-                    contentDescription = "Add",
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(50))
-                        .background(Color.LightGray)
-                        .size(25.dp),
-                    tint = Color.Black
-                )
-            }
-            Picker(units)
-
         }
     }
 }

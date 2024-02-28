@@ -30,21 +30,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.example.crowdconnectapp.models.QuizViewModel
 import com.example.crowdconnectapp.ui.theme.VividBlue
-
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun TabLayout(
     navController: NavHostController,
     tabItems: List<TabItem>,
-    quizViewModel: QuizViewModel? = null, // Add an optional QuizViewModel parameter
     currentTabIndex: Int
 ) {
-    var selectedTabIndex by remember { mutableIntStateOf(1) }
-    val pagerState = rememberPagerState(pageCount = { tabItems.size })
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    val pagerState = rememberPagerState(pageCount = { tabItems.size }, initialPage = currentTabIndex)
 
     LaunchedEffect(selectedTabIndex) {
         pagerState.animateScrollToPage(selectedTabIndex)
@@ -117,11 +116,7 @@ fun TabLayout(
                 modifier = Modifier.fillMaxSize()
             ) {
                 // Pass the quizViewModel to the screen composable function
-                tabItems[it].screen?.let { it1 ->
-                    if (quizViewModel != null) {
-                        it1(quizViewModel)
-                    }
-                }
+                tabItems[it].screen()
             }
         }
     }

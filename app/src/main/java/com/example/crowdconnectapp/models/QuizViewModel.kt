@@ -1,11 +1,15 @@
 package com.example.crowdconnectapp.models
 
 import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import javax.inject.Inject
 
 data class Question(val text: String, val options: List<String>, val correctAnswerIndex: Int)
-class QuizViewModel : ViewModel() {
+
+@HiltViewModel
+class QuizViewModel @Inject constructor() : ViewModel() {
     private val _questions = MutableStateFlow<List<Question>>(emptyList())
     val questions: StateFlow<List<Question>> = _questions
 

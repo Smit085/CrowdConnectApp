@@ -11,7 +11,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.example.crowdconnectapp.navigation.NavHostController
 import com.example.crowdconnectapp.ui.theme.CrowdConnectAppTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {

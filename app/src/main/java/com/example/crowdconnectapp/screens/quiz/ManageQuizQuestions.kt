@@ -18,20 +18,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.crowdconnectapp.models.Question
 import com.example.crowdconnectapp.models.QuizViewModel
 import com.example.crowdconnectapp.ui.theme.Blue
 import com.example.crowdconnectapp.ui.theme.VividBlue
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 
 @Composable
-fun ManageQuestions(quizViewModel: QuizViewModel) {
+fun ManageQuestions() {
 //    val questions = listOf(
 //        Question("What is the capital of France?", listOf("Paris", "London", "Berlin"), 0),
 //        Question("What is the capital of France?", listOf("Paris", "London", "Berlin"), 0),
@@ -46,6 +41,8 @@ fun ManageQuestions(quizViewModel: QuizViewModel) {
 //
 //        )
 //    )
+
+    val quizViewModel: QuizViewModel = hiltViewModel()
     val questions by quizViewModel.questions.collectAsState()
 
     val onEditQuestion: (Question) -> Unit = {}
