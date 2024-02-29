@@ -6,6 +6,7 @@ import androidx.compose.runtime.remember
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.crowdconnectapp.components.qrcode.QrcodeScreen
 import com.example.crowdconnectapp.models.QuizViewModel
 import com.example.crowdconnectapp.screens.*
 import com.example.crowdconnectapp.screens.quiz.ConfigureQuiz
@@ -17,7 +18,7 @@ import com.example.crowdconnectapp.screens.quiz.OrganizeQuizScreen
 fun NavHostController() {
     val navController = rememberNavController()
     val quizViewModel = remember { QuizViewModel() }
-    NavHost(navController = navController, startDestination = "hostScreen") {
+    NavHost(navController = navController, startDestination = "QrcodeScreen") {
         composable(route = "welcomeScreen") {
             WelcomeScreen(navController)
         }
@@ -45,6 +46,9 @@ fun NavHostController() {
         }
         composable(route = "manageQuestionsScreen") {
             ManageQuestions()
+        }
+        composable(route = "QrcodeScreen") {
+            QrcodeScreen()
         }
     }
 }

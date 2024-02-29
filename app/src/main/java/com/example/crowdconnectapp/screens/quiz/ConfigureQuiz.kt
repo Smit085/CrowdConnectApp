@@ -61,6 +61,7 @@ fun App() {
     var isShuffleQuestionsEnabled by remember { mutableStateOf(false) }
     var isShuffleOptionsEnabled by remember { mutableStateOf(false) }
     var isEvaluateEnabled by remember { mutableStateOf(false) }
+    var isKioskEnabled by remember { mutableStateOf(false) }
     var selectedDate by remember { mutableStateOf("") }
     var selectedTime by remember { mutableStateOf("") }
     var showDateDialog by remember { mutableStateOf(false) }
@@ -227,6 +228,7 @@ fun App() {
         LabeledCheckbox(text = "Shuffle Questions", isChecked = isShuffleQuestionsEnabled, onCheckedChange = {isShuffleQuestionsEnabled = !isShuffleQuestionsEnabled})
         LabeledCheckbox(text = "Shuffle Options", isChecked = isShuffleOptionsEnabled, onCheckedChange = {isShuffleOptionsEnabled = !isShuffleOptionsEnabled})
         LabeledCheckbox(text = "Evaluate", isChecked = isEvaluateEnabled, onCheckedChange = {isEvaluateEnabled = !isEvaluateEnabled})
+        LabeledCheckbox(text = "kiosk mode", isChecked = isKioskEnabled, onCheckedChange = {isKioskEnabled = !isKioskEnabled})
     }
 }
 
