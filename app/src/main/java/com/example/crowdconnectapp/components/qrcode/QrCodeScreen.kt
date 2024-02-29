@@ -16,7 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 @Preview(showBackground = true)
 @Composable
 fun QrcodeScreen() {
-    val pagerState = rememberPagerState(pageCount = { 10000 }, initialPage = 5000)
+    val pagerState = rememberPagerState(pageCount = { 2 })
     HorizontalPager(
         modifier = Modifier.fillMaxSize(),
         state = pagerState,
@@ -27,7 +27,11 @@ fun QrcodeScreen() {
             ShowQRCode(context, "THANK YOU", 1000)
         } else {
             // Show manual code display
-            Text(modifier = Modifier.fillMaxSize(), textAlign = TextAlign.Center, text = "Manual Code")
+            Text(
+                modifier = Modifier.fillMaxSize(),
+                textAlign = TextAlign.Center,
+                text = "Manual Code"
+            )
         }
     }
 }

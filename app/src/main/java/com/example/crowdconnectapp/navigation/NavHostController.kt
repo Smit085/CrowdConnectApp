@@ -18,7 +18,7 @@ import com.example.crowdconnectapp.screens.quiz.OrganizeQuizScreen
 fun NavHostController() {
     val navController = rememberNavController()
     val quizViewModel = remember { QuizViewModel() }
-    NavHost(navController = navController, startDestination = "QrcodeScreen") {
+    NavHost(navController = navController, startDestination = "organizeQuizScreen") {
         composable(route = "welcomeScreen") {
             WelcomeScreen(navController)
         }
