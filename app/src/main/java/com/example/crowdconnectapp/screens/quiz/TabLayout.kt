@@ -40,7 +40,7 @@ import com.example.crowdconnectapp.ui.theme.VividBlue
 fun TabLayout(
     navController: NavHostController,
     tabItems: List<TabItem>,
-    currentTabIndex: Int
+    currentTabIndex: Int = 0
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val pagerState = rememberPagerState(pageCount = { tabItems.size }, initialPage = currentTabIndex)

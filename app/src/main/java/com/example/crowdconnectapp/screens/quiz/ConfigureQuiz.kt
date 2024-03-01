@@ -1,5 +1,6 @@
 package com.example.crowdconnectapp.screens.quiz
 
+import android.widget.NumberPicker
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,108 +14,93 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.crowdconnectapp.components.Picker
-import com.example.crowdconnectapp.components.rememberPickerState
 import androidx.compose.ui.text.TextStyle
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.crowdconnectapp.components.LabeledCheckbox
+import com.example.crowdconnectapp.components.LabeledSwitch
+import com.example.crowdconnectapp.components.Picker
 import com.example.crowdconnectapp.components.customDatePicker
 import com.example.crowdconnectapp.components.customTimePicker
-
-@Composable
-fun ConfigureQuiz() {
-    App()
-}
+import com.example.crowdconnectapp.models.QuizViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun App() {
-    var isScheduleEnabled by remember { mutableStateOf(false) }
-    var isDurationEnabled by remember { mutableStateOf(false) }
-    var isTimeoutEnabled by remember { mutableStateOf(false) }
-    var isShuffleQuestionsEnabled by remember { mutableStateOf(false) }
-    var isShuffleOptionsEnabled by remember { mutableStateOf(false) }
-    var isEvaluateEnabled by remember { mutableStateOf(false) }
-    var isKioskEnabled by remember { mutableStateOf(false) }
-    var selectedDate by remember { mutableStateOf("") }
-    var selectedTime by remember { mutableStateOf("") }
+fun ConfigureQuiz() {
+    val quizViewModel: QuizViewModel = hiltViewModel()
+    var title by remember { mutableStateOf(quizViewModel.title) }
+    var description by remember { mutableStateOf(quizViewModel.description) }
+    var isScheduleEnabled by remember { mutableStateOf(quizViewModel.isScheduleEnabled) }
+    var isDurationEnabled by remember { mutableStateOf(quizViewModel.isDurationEnabled) }
+    var isTimeoutEnabled by remember { mutableStateOf(quizViewModel.isTimeoutEnabled) }
+    var isShuffleQuestionsEnabled by remember { mutableStateOf(quizViewModel.isShuffleQuestionsEnabled) }
+    var isShuffleOptionsEnabled by remember { mutableStateOf(quizViewModel.isShuffleOptionsEnabled) }
+    var isKioskEnabled by remember { mutableStateOf(quizViewModel.isKioskEnabled) }
+    var isEvaluateEnabled by remember { mutableStateOf(quizViewModel.isEvaluateEnabled) }
+
     var showDateDialog by remember { mutableStateOf(false) }
     var showTimeDialog by remember { mutableStateOf(false) }
+
+    var selectedDate by remember { mutableStateOf(quizViewModel.selectedDate) }
+    var selectedTime by remember { mutableStateOf(quizViewModel.selectedTime) }
+    var duration by remember { mutableIntStateOf(quizViewModel.duration) }
+    var timeout by remember { mutableIntStateOf(quizViewModel.timeout) }
+    val scrollState = rememberScrollState()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp, vertical = 10.dp)
+            .verticalScroll(scrollState)
     ) {
-        var title by remember { mutableStateOf("") }
-        var description by remember { mutableStateOf("") }
 
-
-        OutlinedTextField(value = title, onValueChange = { text ->
-            title = text
-        }, label = { Text("Title") }, modifier = Modifier.fillMaxWidth(), maxLines = 1
+        TextField(value = title, onValueChange = {
+            title = it
+            quizViewModel.title = it
+        }, label = { Text("Title") }, modifier = Modifier.fillMaxWidth(), maxLines = 2
         )
         Spacer(modifier = Modifier.height(16.dp))
         TextField(
             value = description,
-            onValueChange = { text ->
-                description = text
+            onValueChange = {
+                description = it
+                quizViewModel.description = it
             },
             label = { Text("Description") },
+            modifier = Modifier.fillMaxWidth(),
             minLines = 4,
-            maxLines = 5,
-            modifier = Modifier.fillMaxWidth()
+            maxLines = 5
         )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(text = "Schedule Session")
-            Switch(modifier = Modifier.scale(0.8f),
-                checked = isScheduleEnabled,
-                onCheckedChange = { isChecked ->
-                    isScheduleEnabled = isChecked
-                },
-                thumbContent = if (isScheduleEnabled) {
-                    {
-                        Icon(
-                            imageVector = Icons.Filled.Check,
-                            contentDescription = null,
-                            modifier = Modifier.size(SwitchDefaults.IconSize),
-                        )
-                    }
-                } else {
-                    null
-                })
-        }
+
+        LabeledSwitch(text = "Schedule Session",
+            isChecked = isScheduleEnabled,
+            onCheckedChange = { isChecked ->
+                isScheduleEnabled = isChecked
+                quizViewModel.isScheduleEnabled = isChecked
+            })
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -144,6 +130,7 @@ fun App() {
                 val result = customDatePicker(showDateDialog)
                 showDateDialog = result.showDialog
                 selectedDate = result.selectedDate
+                quizViewModel.selectedDate = result.selectedDate
             }
             OutlinedTextField(value = selectedTime,
                 onValueChange = {
@@ -172,116 +159,105 @@ fun App() {
                 selectedTime = "${
                     result.timeState.hour.toString().padStart(2, '0')
                 }:${result.timeState.minute.toString().padStart(2, '0')}"
+                quizViewModel.selectedTime = selectedTime
             }
         }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(text = "Duration/Question")
-            Switch(modifier = Modifier.scale(0.8f),
-                checked = isDurationEnabled,
-                onCheckedChange = { isChecked ->
-                    isDurationEnabled = isChecked
-                },
-                thumbContent = if (isDurationEnabled) {
-                    {
-                        Icon(
-                            imageVector = Icons.Filled.Check,
-                            contentDescription = null,
-                            modifier = Modifier.size(SwitchDefaults.IconSize),
-                        )
-                    }
-                } else {
-                    null
+        LabeledSwitch(text = "Duration/Question",
+            isChecked = isDurationEnabled,
+            onCheckedChange = { isChecked ->
+                isDurationEnabled = isChecked
+                quizViewModel.isDurationEnabled = isChecked
+            })
+        if (isDurationEnabled) {
+            NumberPicker(quizViewModel.duration, listOf("", "sec", "min", ""), onNumberChanged = {
+                duration = it
+                quizViewModel.duration = it
+            })
+        }
+        LabeledSwitch(text = "Session Timeout",
+            isChecked = isTimeoutEnabled,
+            onCheckedChange = { isChecked ->
+                isTimeoutEnabled = isChecked
+                quizViewModel.isTimeoutEnabled = isChecked
+            })
+        if (isTimeoutEnabled) {
+            NumberPicker(
+                quizViewModel.timeout,
+                listOf("", "sec", "min", "hrs", ""),
+                onNumberChanged = {
+                    timeout = it
+                    quizViewModel.timeout = it
                 })
         }
-        NumberPicker(listOf("", "sec", "min", ""),isDurationEnabled)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(text = "Session Timeout")
-            Switch(modifier = Modifier.scale(0.8f),
-                checked = isTimeoutEnabled,
-                onCheckedChange = { isChecked ->
-                    isTimeoutEnabled = isChecked
-                },
-                thumbContent = if (isTimeoutEnabled) {
-                    {
-                        Icon(
-                            imageVector = Icons.Filled.Check,
-                            contentDescription = null,
-                            modifier = Modifier.size(SwitchDefaults.IconSize),
-                        )
-                    }
-                } else {
-                    null
-                })
-        }
-        NumberPicker(listOf("", "sec", "min", "hrs", ""),isTimeoutEnabled)
-
-        LabeledCheckbox(text = "Shuffle Questions", isChecked = isShuffleQuestionsEnabled, onCheckedChange = {isShuffleQuestionsEnabled = !isShuffleQuestionsEnabled})
-        LabeledCheckbox(text = "Shuffle Options", isChecked = isShuffleOptionsEnabled, onCheckedChange = {isShuffleOptionsEnabled = !isShuffleOptionsEnabled})
-        LabeledCheckbox(text = "Evaluate", isChecked = isEvaluateEnabled, onCheckedChange = {isEvaluateEnabled = !isEvaluateEnabled})
-        LabeledCheckbox(text = "kiosk mode", isChecked = isKioskEnabled, onCheckedChange = {isKioskEnabled = !isKioskEnabled})
+        LabeledCheckbox(text = "Shuffle Questions",
+            isChecked = isShuffleQuestionsEnabled,
+            onCheckedChange = { isChecked ->
+                isShuffleQuestionsEnabled = isChecked
+                quizViewModel.isShuffleQuestionsEnabled = isChecked
+            })
+        LabeledCheckbox(text = "Shuffle Options",
+            isChecked = isShuffleOptionsEnabled,
+            onCheckedChange = { isChecked ->
+                isShuffleOptionsEnabled = isChecked
+                quizViewModel.isShuffleOptionsEnabled = isChecked
+            })
+        LabeledCheckbox(text = "Evaluate",
+            isChecked = isEvaluateEnabled,
+            onCheckedChange = { isChecked ->
+                isEvaluateEnabled = isChecked
+                quizViewModel.isEvaluateEnabled = isChecked
+            })
+        LabeledCheckbox(text = "kiosk mode",
+            isChecked = isKioskEnabled,
+            onCheckedChange = { isChecked ->
+                isKioskEnabled = isChecked
+                quizViewModel.isKioskEnabled = isChecked
+            })
     }
 }
 
 @Composable
-fun NumberPicker(units: List<String>, enable: Boolean) {
-    if (enable) {
-        var number by remember { mutableIntStateOf(0) }
-        Column(modifier = Modifier) {
-            Row(
-                modifier = Modifier.wrapContentSize(),
-                verticalAlignment = Alignment.CenterVertically
+fun NumberPicker(number: Int, units: List<String>, onNumberChanged: (Int) -> Unit) {
+    var number by remember { mutableIntStateOf(number) }
+
+    Column(modifier = Modifier) {
+        Row(
+            modifier = Modifier.wrapContentSize(), verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = {
+                    number = if (number == 0) 0 else number - 10
+                    onNumberChanged(number)
+                }, modifier = Modifier.width(40.dp)
             ) {
-                IconButton(
-                    onClick = { number = if (number == 0) 0 else number - 10 },
-                    modifier = Modifier.width(40.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowDown,
-                        contentDescription = "Minus",
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(50))
-                            .size(25.dp),
-                        tint = Color.Black
-                    )
-                }
-                Text(text = "$number")
-                IconButton(onClick = {
-                    number += 10
-                }, modifier = Modifier.width(40.dp)) {
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowUp,
-                        contentDescription = "Add",
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(50))
-                            .size(25.dp),
-                        tint = Color.Black
-                    )
-                }
-                Picker(units)
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = "Minus",
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .size(25.dp),
+                    tint = Color.Black
+                )
             }
+            Text(text = "$number")
+            IconButton(
+                onClick = {
+                    number += 10
+                    onNumberChanged(number)
+                }, modifier = Modifier.width(40.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowUp,
+                    contentDescription = "Add",
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .size(25.dp),
+                    tint = Color.Black
+                )
+            }
+            Picker(units)
         }
     }
 }
 
-@Composable
-fun Picker(units: List<String>) {
-    val unitsPickerState = rememberPickerState()
-    Picker(
-        state = unitsPickerState,
-        items = units,
-        visibleItemsCount = 3,
-        modifier = Modifier.wrapContentSize(),
-        textModifier = Modifier.padding(8.dp),
-        textStyle = TextStyle(fontSize = 18.sp)
-    )
-}
+

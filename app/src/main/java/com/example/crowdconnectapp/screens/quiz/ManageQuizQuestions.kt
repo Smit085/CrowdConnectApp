@@ -27,20 +27,6 @@ import com.example.crowdconnectapp.ui.theme.VividBlue
 
 @Composable
 fun ManageQuestions() {
-//    val questions = listOf(
-//        Question("What is the capital of France?", listOf("Paris", "London", "Berlin"), 0),
-//        Question("What is the capital of France?", listOf("Paris", "London", "Berlin"), 0),
-//        Question(
-//            "What is the capital of Franceeeeeeeeeeeeeeeeeeeeeeeeee?",
-//            listOf("Paris", "London", "Berlin"),
-//            0
-//        ),
-//        Question(
-//            "Who wrote 'To Kill a Mockingbird'?",
-//            listOf("Harper Lee", "Stephen King", "J.K. Rowling"),
-//
-//        )
-//    )
 
     val quizViewModel: QuizViewModel = hiltViewModel()
     val questions by quizViewModel.questions.collectAsState()

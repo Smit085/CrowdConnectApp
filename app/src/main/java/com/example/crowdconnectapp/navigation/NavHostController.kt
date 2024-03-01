@@ -6,7 +6,7 @@ import androidx.compose.runtime.remember
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.crowdconnectapp.components.qrcode.QrcodeScreen
+import com.example.crowdconnectapp.components.qrcode.FlipCard
 import com.example.crowdconnectapp.models.QuizViewModel
 import com.example.crowdconnectapp.screens.*
 import com.example.crowdconnectapp.screens.quiz.ConfigureQuiz
@@ -46,9 +46,6 @@ fun NavHostController() {
         }
         composable(route = "manageQuestionsScreen") {
             ManageQuestions()
-        }
-        composable(route = "QrcodeScreen") {
-            QrcodeScreen()
         }
     }
 }
