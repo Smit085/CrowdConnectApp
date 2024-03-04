@@ -22,8 +22,9 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import com.example.crowdconnectapp.ui.theme.VividBlue
 
-fun generateQRCode(context: Context, qrCodeData: String, size: Int): Bitmap? {
+fun generateCode(context: Context, qrCodeData: String, size: Int): Bitmap? {
     val hints = mutableMapOf<EncodeHintType, Any>()
     hints[EncodeHintType.MARGIN] = 2
     try {
@@ -47,15 +48,20 @@ fun generateQRCode(context: Context, qrCodeData: String, size: Int): Bitmap? {
 }
 
 @Composable
-fun ShowQRCode(context: Context, qrCodeData: String, size: Int) {
-    Box(){
-    val qrCodeBitmap = generateQRCode(context, qrCodeData, size)
-    qrCodeBitmap?.let {
-        Image(modifier = Modifier
-            .fillMaxWidth()
-            .scale(0.8f)
-            .wrapContentSize(), contentScale = ContentScale.Fit, bitmap = it.asImageBitmap(), contentDescription = null)
-    }
+fun ShowQRCode(context: Context, qrCodeData: String, sizeInDp: Int) {
+    Box(modifier = Modifier.wrapContentSize().padding(16.dp)) {
+        val qrCodeBitmap = generateCode(context, qrCodeData, sizeInDp)
+        qrCodeBitmap?.let {
+            Image(
+                modifier = Modifier
+                    .size(sizeInDp.dp)
+                    .padding(16.dp),
+                contentScale = ContentScale.Fit,
+                bitmap = it.asImageBitmap(),
+                contentDescription = "QR Code: $qrCodeData"
+            )
+        }
     }
 }
+
 

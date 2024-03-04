@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "832028137982",
+    "project_id": "crowdconnect-088",
+    "storage_bucket": "crowdconnect-088.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:832028137982:android:3763cf35e224eb95a608af",
+        "android_client_info": {
+          "package_name": "com.example.crowdconnectapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDsZRLCRxAdFRdPNNLze0EEDTv1xLWxDe4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

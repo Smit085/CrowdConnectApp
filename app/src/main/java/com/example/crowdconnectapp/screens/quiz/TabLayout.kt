@@ -43,14 +43,17 @@ fun TabLayout(
     currentTabIndex: Int = 0
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val pagerState = rememberPagerState(pageCount = { tabItems.size }, initialPage = currentTabIndex)
+    val pagerState =
+        rememberPagerState(pageCount = { tabItems.size }, initialPage = currentTabIndex)
 
     LaunchedEffect(selectedTabIndex) {
         pagerState.animateScrollToPage(selectedTabIndex)
     }
 
-    LaunchedEffect(pagerState.currentPage) {
-        selectedTabIndex = pagerState.currentPage
+    LaunchedEffect(pagerState.currentPage, pagerState.isScrollInProgress) {
+        if (!pagerState.isScrollInProgress) {
+            selectedTabIndex = pagerState.currentPage
+        }
     }
 
     Scaffold(

@@ -12,6 +12,7 @@ val Pink40 = Color(0xFFE7DADE)
 
 
 val VividBlue = Color(0xFF2194DE)
+val VividBlue50 = Color(0x802194DE)
 val Blue = Color(0xFFa7d4f2)
 val OffWhite = Color(0xFFFAFAFA)
 val Grey = Color(0xFF9E9E9E)
