@@ -35,6 +35,9 @@ import com.example.crowdconnectapp.data.readDB
 import com.example.crowdconnectapp.models.QuizViewModel
 import com.google.firebase.firestore.FirebaseFirestore
 import java.security.SecureRandom
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 
 @Preview(showBackground = true)
 @Composable
@@ -71,7 +74,10 @@ fun PublishScreen() {
                 )
             }
             IconButton(
-                onClick = { readDB("Sessions",quizViewModel.sessioncode) },
+                onClick = { val clipboardManager =
+                    context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    val clip = ClipData.newPlainText("password", quizViewModel.sessioncode)
+                    clipboardManager.setPrimaryClip(clip) },
                 ) {
                 Icon(
                     Icons.Default.ContentCopy,

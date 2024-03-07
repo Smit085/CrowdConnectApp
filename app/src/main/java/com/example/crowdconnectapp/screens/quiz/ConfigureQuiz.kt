@@ -1,6 +1,5 @@
 package com.example.crowdconnectapp.screens.quiz
 
-import android.widget.NumberPicker
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -36,7 +35,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.TextStyle
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -169,9 +167,16 @@ fun ConfigureQuiz() {
                 quizViewModel.isDurationEnabled = isChecked
             })
         if (isDurationEnabled) {
-            NumberPicker(quizViewModel.duration, listOf("", "sec", "min", ""), onNumberChanged = {
-                duration = it
-                quizViewModel.duration = it
+            NumberPicker(
+                quizViewModel.duration,
+                quizViewModel.durationIn,
+                listOf("", "sec", "min", ""),
+                onNumberChanged = {
+                    duration = it
+                    quizViewModel.duration = it
+                },
+            onSelectedItemChanged = {
+                quizViewModel.durationIn = it
             })
         }
         LabeledSwitch(text = "Session Timeout",
@@ -183,10 +188,14 @@ fun ConfigureQuiz() {
         if (isTimeoutEnabled) {
             NumberPicker(
                 quizViewModel.timeout,
+                quizViewModel.timeoutIn,
                 listOf("", "sec", "min", "hrs", ""),
                 onNumberChanged = {
                     timeout = it
                     quizViewModel.timeout = it
+                },
+                onSelectedItemChanged = {
+                    quizViewModel.timeoutIn = it
                 })
         }
         LabeledCheckbox(text = "Shuffle Questions",
@@ -217,7 +226,13 @@ fun ConfigureQuiz() {
 }
 
 @Composable
-fun NumberPicker(number: Int, units: List<String>, onNumberChanged: (Int) -> Unit) {
+fun NumberPicker(
+    number: Int,
+    selectedItem: String,
+    units: List<String>,
+    onNumberChanged: (Int) -> Unit,
+    onSelectedItemChanged: (String) -> Unit
+) {
     var number by remember { mutableIntStateOf(number) }
 
     Column(modifier = Modifier) {
@@ -255,9 +270,7 @@ fun NumberPicker(number: Int, units: List<String>, onNumberChanged: (Int) -> Uni
                     tint = Color.Black
                 )
             }
-            Picker(units)
+            Picker(units,onSelectedItemChanged)
         }
     }
 }
-
-

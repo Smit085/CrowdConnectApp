@@ -2,6 +2,7 @@ package com.example.crowdconnectapp.data
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import com.example.crowdconnectapp.models.Question
 import com.example.crowdconnectapp.models.QuizViewModel
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -12,9 +13,24 @@ fun addToDB(viewModel: ViewModel, collection: String, sessionId: String) {
     val dataMap = when (viewModel) {
         is QuizViewModel -> {
             val quizViewModel = viewModel as QuizViewModel
+            val questionsMap = convertQuestionsToMap(quizViewModel.questions.value)
             mapOf(
                 "title" to quizViewModel.title,
-                "description" to quizViewModel.description
+                "description" to quizViewModel.description,
+                "selectedDate" to quizViewModel.selectedDate,
+                "selectedTime" to quizViewModel.selectedTime,
+                "duration" to quizViewModel.duration,
+                "durationIn" to quizViewModel.durationIn,
+                "timeout" to quizViewModel.timeout,
+                "timeoutIn" to quizViewModel.timeoutIn,
+                "isScheduleEnabled" to quizViewModel.isScheduleEnabled,
+                "isDurationEnabled" to quizViewModel.isDurationEnabled,
+                "isTimeoutEnabled" to quizViewModel.isTimeoutEnabled,
+                "isShuffleQuestionsEnabled" to quizViewModel.isShuffleQuestionsEnabled,
+                "isShuffleOptionsEnabled" to quizViewModel.isShuffleOptionsEnabled,
+                "isEvaluateEnabled" to quizViewModel.isEvaluateEnabled,
+                "isKioskEnabled" to quizViewModel.isKioskEnabled,
+                "questions" to questionsMap
             )
         }
 //        is PollViewModel -> {
@@ -59,4 +75,14 @@ fun readDB(collection: String, sessionId: String){
         .addOnFailureListener { e ->
             Log.w("DB", "Error fetching document", e)
         }
+}
+
+fun convertQuestionsToMap(questions: List<Question>): List<Map<String, Any>> {
+    return questions.map { question ->
+        mapOf(
+            "correctAnswerIndex" to question.correctAnswerIndex,
+            "options" to question.options,
+            "question" to question.text,
+        )
+    }
 }

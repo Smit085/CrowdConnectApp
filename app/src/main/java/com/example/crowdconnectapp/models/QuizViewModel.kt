@@ -37,7 +37,9 @@ class QuizViewModel @Inject constructor() : ViewModel() {
     var selectedDate = ""
     var selectedTime = ""
     var duration = 0
+    var durationIn = ""
     var timeout = 0
+    var timeoutIn = ""
 
     var isTimeoutEnabled: Boolean = false
     var isShuffleQuestionsEnabled: Boolean = false

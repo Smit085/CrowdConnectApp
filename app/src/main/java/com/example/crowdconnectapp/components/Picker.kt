@@ -3,12 +3,10 @@ package com.example.crowdconnectapp.components
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Divider
@@ -35,7 +33,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -53,6 +50,7 @@ class PickerState {
 @Composable
 fun Picker(
     items: List<String>,
+    onSelectedItemChanged: (String) -> Unit,
     state: PickerState = rememberPickerState(),
     modifier: Modifier = Modifier,
     startIndex: Int = 0,
@@ -82,10 +80,12 @@ fun Picker(
             0f to Color.Transparent, 0.5f to Color.Black, 1f to Color.Transparent
         )
     }
-
     LaunchedEffect(listState) {
         snapshotFlow { listState.firstVisibleItemIndex }.map { index -> getItem(index + visibleItemsMiddle) }
-            .distinctUntilChanged().collect { item -> state.selectedItem = item }
+            .distinctUntilChanged().collect { item ->
+                state.selectedItem = item
+                onSelectedItemChanged(item)
+            }
     }
 
     Box(modifier = modifier) {
@@ -111,7 +111,6 @@ fun Picker(
                         .then(textModifier))
             }
         }
-
         Divider(
             color = dividerColor,
             modifier = Modifier
