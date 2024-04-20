@@ -1,22 +1,14 @@
 package com.example.crowdconnectapp.screens
 
 import android.annotation.SuppressLint
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.HomeWork
 import androidx.compose.material.icons.filled.ManageHistory
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalAbsoluteTonalElevation
@@ -34,13 +26,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 
 data class BottomNavigationItem(
@@ -55,8 +43,7 @@ data class BottomNavigationItem(
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HostScreen() {
-    val navController = rememberNavController()
+fun HostScreen(navController: NavHostController) {
     var selectedItemIndex by rememberSaveable {
         mutableIntStateOf(0)
     }
@@ -96,10 +83,6 @@ fun HostScreen() {
                                 selected = selectedItemIndex == index,
                                 onClick = {
                                     selectedItemIndex = index
-                                    navController.navigate(item.route) {
-                                        popUpTo(navController.graph.startDestinationId)
-                                        launchSingleTop = true
-                                    }
                                 },
                                 label = {
 //                                    if (selectedItemIndex == index) {
@@ -138,10 +121,10 @@ fun HostScreen() {
             content = {
                 // Use the NavHostController to navigate to the appropriate screen
                 // based on the selected bottom navigation item.
-                NavHost(navController = navController, startDestination = "hostDashboard") {
-                    composable("hostDashboard") { HostDashboard() }
-                    composable("history") { Text(text = "History Screen") }
-                    composable("settings") { Text(text = "Settings Screen") }
+                when(selectedItemIndex) {
+                    0 -> { HostDashboard(navController) }
+                    1 -> { Text(text = "History Screen") }
+                    2 ->  { Text(text = "Settings Screen") }
                 }
             }
         )

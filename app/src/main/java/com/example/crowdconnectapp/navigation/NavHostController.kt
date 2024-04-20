@@ -21,7 +21,7 @@ fun NavHostController() {
             WelcomeScreen(navController)
         }
         composable(route = "hostScreen") {
-            HostScreen()
+            HostScreen(navController)
         }
         composable(route = "attendeeScreen") {
             AttendeeDashboard(navController)

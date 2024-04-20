@@ -1,9 +1,7 @@
 package com.example.crowdconnectapp.screens
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -22,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 
 data class Session(val id: String, val name: String)
 
@@ -40,29 +37,24 @@ val sessions = listOf(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HostDashboard() {
-    val navController = rememberNavController()
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Host Dashboard") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.primary,
-                ),
+fun HostDashboard(navController: NavHostController) {
+    Scaffold(topBar = {
+        TopAppBar(
+            title = { Text("Host Dashboard") },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                titleContentColor = MaterialTheme.colorScheme.primary,
+            ),
+        )
+    }) {
+        Column(modifier = Modifier.padding(it)) {
+            Text(
+                modifier = Modifier.padding(16.dp),
+                text = "Services",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
-        }
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(modifier = Modifier.padding(it)) {
-                Text(
-                    modifier = Modifier.padding(16.dp),
-                    text = "Services",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                SessionList(sessions, navController)
-            }
+            SessionList(sessions, navController)
         }
     }
 }
@@ -84,7 +76,7 @@ fun SessionCard(session: Session, navController: NavHostController) {
         onClick = {
             when (session.id) {
                 "1" -> navController.navigate("organizeQuizScreen")
-                "2" -> navController.navigate("organizePollScreen")
+                "2" -> navController.navigate("organizeQuizScreen")
                 "3" -> navController.navigate("organizeVotingScreen")
             }
         },
