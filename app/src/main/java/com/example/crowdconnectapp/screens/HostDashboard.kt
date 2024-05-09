@@ -64,7 +64,6 @@ fun SessionList(sessions: List<Session>, navController: NavHostController) {
     LazyColumn {
         items(sessions) { session ->
             SessionCard(session, navController)
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -82,7 +81,8 @@ fun SessionCard(session: Session, navController: NavHostController) {
         },
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .padding(8.dp)
+            .padding(horizontal = 10.dp),
         shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {

@@ -1,5 +1,7 @@
 package com.example.crowdconnectapp.screens.quiz
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -44,7 +46,10 @@ import com.example.crowdconnectapp.components.Picker
 import com.example.crowdconnectapp.components.customDatePicker
 import com.example.crowdconnectapp.components.customTimePicker
 import com.example.crowdconnectapp.models.QuizViewModel
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ConfigureQuiz() {

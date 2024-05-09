@@ -40,9 +40,9 @@ fun ManageQuestions() {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "No questions available.\nAdd a question first.",
+                text = "Questions not created yet\n     add a question first.",
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(16.dp).align(Alignment.Center)
             )
         }
     } else {

@@ -1,12 +1,17 @@
 package com.example.crowdconnectapp.data
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import com.example.crowdconnectapp.models.Question
 import com.example.crowdconnectapp.models.QuizViewModel
 import com.google.firebase.firestore.FirebaseFirestore
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 fun addToDB(viewModel: ViewModel, collection: String, sessionId: String) {
     val firestore = FirebaseFirestore.getInstance()
 
@@ -14,6 +19,9 @@ fun addToDB(viewModel: ViewModel, collection: String, sessionId: String) {
         is QuizViewModel -> {
             val quizViewModel = viewModel as QuizViewModel
             val questionsMap = convertQuestionsToMap(quizViewModel.questions.value)
+
+            if (quizViewModel.selectedDate.isEmpty()) quizViewModel.selectedDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+            if (quizViewModel.selectedTime.isEmpty()) quizViewModel.selectedTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))
             mapOf(
                 "title" to quizViewModel.title,
                 "description" to quizViewModel.description,

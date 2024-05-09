@@ -6,10 +6,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.HomeWork
-import androidx.compose.material.icons.filled.ManageHistory
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalAbsoluteTonalElevation
 import androidx.compose.material3.MaterialTheme
@@ -29,7 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 
 data class BottomNavigationItem(
     val title: String,
@@ -41,7 +39,6 @@ data class BottomNavigationItem(
 )
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HostScreen(navController: NavHostController) {
     var selectedItemIndex by rememberSaveable {
@@ -56,12 +53,12 @@ fun HostScreen(navController: NavHostController) {
             route = "hostDashboard"
         ),
         BottomNavigationItem(
-            title = "History",
-            selectedIcon = Icons.Filled.ManageHistory,
-            unselectedIcon = Icons.Filled.ManageHistory,
+            title = "Resents",
+            selectedIcon = Icons.Filled.Assessment,
+            unselectedIcon = Icons.Filled.Assessment,
             hasNews = false,
             badgeCount = 1,
-            route = "history"
+            route = "resents"
         ),
         BottomNavigationItem(
             title = "Settings",
@@ -76,7 +73,7 @@ fun HostScreen(navController: NavHostController) {
         Scaffold(
             bottomBar = {
                 NavigationBar(
-                    modifier = Modifier.height(70.dp), // Adjust the height as needed
+                    modifier = Modifier.height(70.dp),
                     content = {
                         items.forEachIndexed { index, item ->
                             NavigationBarItem(
@@ -119,11 +116,9 @@ fun HostScreen(navController: NavHostController) {
                 )
             },
             content = {
-                // Use the NavHostController to navigate to the appropriate screen
-                // based on the selected bottom navigation item.
                 when(selectedItemIndex) {
-                    0 -> { HostDashboard(navController) }
-                    1 -> { Text(text = "History Screen") }
+                    1 -> { HostDashboard(navController) }
+                    0 -> { RecentsSessions(navController) }
                     2 ->  { Text(text = "Settings Screen") }
                 }
             }

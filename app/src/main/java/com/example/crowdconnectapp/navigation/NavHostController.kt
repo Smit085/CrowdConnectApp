@@ -1,5 +1,7 @@
 package com.example.crowdconnectapp.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import com.example.crowdconnectapp.screens.quiz.CreateQuizQuestions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -8,10 +10,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.crowdconnectapp.models.QuizViewModel
 import com.example.crowdconnectapp.screens.*
+import com.example.crowdconnectapp.screens.otp.LoginScreen
 import com.example.crowdconnectapp.screens.quiz.ManageQuestions
 import com.example.crowdconnectapp.screens.quiz.OrganizeQuizScreen
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NavHostController() {
     val navController = rememberNavController()
@@ -21,7 +25,7 @@ fun NavHostController() {
             WelcomeScreen(navController)
         }
         composable(route = "hostScreen") {
-            HostScreen(navController)
+            LoginScreen()
         }
         composable(route = "attendeeScreen") {
             AttendeeDashboard(navController)
@@ -30,16 +34,16 @@ fun NavHostController() {
             OrganizeQuizScreen(navController)
         }
         composable(route = "organizeQuizScreenwithtab") {
-            OrganizeQuizScreen(navController,1)
+            OrganizeQuizScreen(navController, 1)
         }
         composable(route = "organizeVotingScreen") {
             OrganizeVotingScreen()
         }
         composable(route = "createQuizQuestions") {
-                CreateQuizQuestions(
-                    onQuestionAdded = {
-                        navController.navigate("organizeQuizScreenwithtab")
-                    })
+            CreateQuizQuestions(
+                onQuestionAdded = {
+                    navController.navigate("organizeQuizScreenwithtab")
+                })
         }
         composable(route = "manageQuestionsScreen") {
             ManageQuestions()
