@@ -1,9 +1,6 @@
 package com.example.crowdconnectapp.screens.quiz
 
 import android.content.Intent
-import android.util.Log
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,7 +9,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -22,8 +18,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -31,20 +25,18 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.crowdconnectapp.components.qrcode.FlipCard
 import com.example.crowdconnectapp.data.addToDB
-import com.example.crowdconnectapp.data.readDB
 import com.example.crowdconnectapp.models.QuizViewModel
-import com.google.firebase.firestore.FirebaseFirestore
 import java.security.SecureRandom
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.navigation.NavHostController
 
 @RequiresApi(Build.VERSION_CODES.O)
-@Preview(showBackground = true)
 @Composable
-fun PublishScreen() {
+fun PublishScreen(navController: NavHostController) {
     val quizViewModel: QuizViewModel = hiltViewModel()
 
     if (quizViewModel.sessioncode == "") {
@@ -94,6 +86,7 @@ fun PublishScreen() {
         Button(
             onClick = {
                 addToDB(quizViewModel,"Sessions",quizViewModel.sessioncode)
+                navController.navigate("hostScreen")
             },
             shape = RoundedCornerShape(5.dp),
             modifier = Modifier.align(Alignment.CenterHorizontally)

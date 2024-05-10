@@ -5,12 +5,15 @@ import androidx.annotation.RequiresApi
 import com.example.crowdconnectapp.screens.quiz.CreateQuizQuestions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.crowdconnectapp.models.QuizViewModel
 import com.example.crowdconnectapp.screens.*
 import com.example.crowdconnectapp.screens.otp.LoginScreen
+import com.example.crowdconnectapp.screens.otp.OtpVerificationScreen
 import com.example.crowdconnectapp.screens.quiz.ManageQuestions
 import com.example.crowdconnectapp.screens.quiz.OrganizeQuizScreen
 
@@ -25,7 +28,17 @@ fun NavHostController() {
             WelcomeScreen(navController)
         }
         composable(route = "hostScreen") {
-            LoginScreen()
+            HostScreen(navController)
+        }
+        composable(route = "loginscreen") {
+            LoginScreen(navController)
+        }
+        composable(
+            route = "otpVerificationScreen/{verificationId}",
+            arguments = listOf(navArgument("verificationId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val verificationId = backStackEntry.arguments?.getString("verificationId")
+            OtpVerificationScreen(navController, verificationId)
         }
         composable(route = "attendeeScreen") {
             AttendeeDashboard(navController)

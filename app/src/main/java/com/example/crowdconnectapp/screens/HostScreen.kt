@@ -117,8 +117,8 @@ fun HostScreen(navController: NavHostController) {
             },
             content = {
                 when(selectedItemIndex) {
-                    1 -> { HostDashboard(navController) }
-                    0 -> { RecentsSessions(navController) }
+                    0 -> { HostDashboard(navController) }
+                    1 -> { RecentsSessions(navController) }
                     2 ->  { Text(text = "Settings Screen") }
                 }
             }

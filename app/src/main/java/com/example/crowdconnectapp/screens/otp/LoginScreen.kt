@@ -1,46 +1,56 @@
 package com.example.crowdconnectapp.screens.otp
 
-import android.telephony.PhoneNumberUtils
-import androidx.compose.animation.VectorConverter
+import android.app.Activity
+import android.content.ContentValues.TAG
+import android.content.Context
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Button
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.crowdconnectapp.data.addToDB
-import com.example.crowdconnectapp.ui.theme.Blue
-import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
+import androidx.navigation.NavHostController
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.PhoneAuthCredential
+import com.google.firebase.auth.PhoneAuthOptions
+import com.google.firebase.auth.PhoneAuthProvider
+import com.google.firebase.FirebaseException
+import com.google.firebase.FirebaseTooManyRequestsException
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthMissingActivityForRecaptchaException
+import java.util.concurrent.TimeUnit
 
 @Composable
-@Preview
-fun LoginScreen() {
-    var phoneNumber by remember { mutableStateOf("") }
+fun LoginScreen(navController: NavHostController) {
     val context = LocalContext.current
+    var phoneNumber by remember { mutableStateOf("") }
+    var isotpSent by remember { mutableStateOf(false) }
+    val auth = FirebaseAuth.getInstance()
+    auth.setLanguageCode("en")
 
     Column(
         modifier = Modifier
@@ -50,7 +60,7 @@ fun LoginScreen() {
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
-            imageVector = Icons.Filled.Send,
+            imageVector = Icons.AutoMirrored.Filled.Send,
             contentDescription = "Phone Icon",
             tint = Color(0xFFDD761C),
             modifier = Modifier
@@ -74,26 +84,73 @@ fun LoginScreen() {
         OutlinedTextFieldWithIcon(
             value = phoneNumber,
             onValueChange = { phoneNumber = it },
-            label = "Enter Mobile Number",
             icon = Icons.Filled.Phone
         )
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = {},
+            onClick = {
+                if (phoneNumber.length == 10) {
+                    isotpSent = false
+                    // Call the composable function from here
+                    sendOtp(context, phoneNumber, auth) {verificationId ->
+                        isotpSent = true
+                        navController.navigate("otpVerificationScreen/$verificationId")
+                    }
+                }
+            },
             shape = RoundedCornerShape(5.dp),
-            modifier = Modifier.align(Alignment.CenterHorizontally).width(250.dp)
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .width(250.dp)
         ) {
             Text(text = "Get OTP", style = MaterialTheme.typography.titleMedium)
         }
     }
 }
 
+fun sendOtp(context: Context, phoneNumber: String, auth: FirebaseAuth, onOtpSent: (String) -> Unit) {
+
+    val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+        override fun onVerificationCompleted(credential: PhoneAuthCredential) {
+            // This callback will be invoked in two situations:
+            // 1 - Instant verification. In some cases, the phone number can be instantly
+            //     verified without needing to send or enter an OTP.
+            // 2 - Auto-retrieval. On some devices, Google Play services can automatically
+            //     detect the incoming verification SMS and perform verification without user action.
+            // OnVerificationStateChangedCallbacks
+//            Toast.makeText(context, "onVerificationCompleted", Toast.LENGTH_SHORT).show()
+        }
+
+        override fun onVerificationFailed(e: FirebaseException) {
+            // This callback is invoked in an invalid request for verification is made,
+            // for instance if the phone number format is not valid.
+            // OnVerificationStateChangedCallbacks
+//            Toast.makeText(context, "onVerificationFailed", Toast.LENGTH_SHORT).show()
+        }
+
+        override fun onCodeSent(verificationId: String, token: PhoneAuthProvider.ForceResendingToken) {
+            // The SMS verification code has been sent to the provided phone number, we
+            // now need to ask the user to enter the code and then construct a credential
+            // by combining the code with a verification ID.
+//            Toast.makeText(context, "onCodeSent", Toast.LENGTH_SHORT).show()
+            onOtpSent(verificationId)
+        }
+    }
+    val options = PhoneAuthOptions.newBuilder(auth)
+        .setPhoneNumber("+91$phoneNumber") // Phone number to verify
+        .setTimeout(60L, TimeUnit.SECONDS) // Timeout and unit
+        .setActivity(context as Activity) // Activity (for callback binding)
+        .setCallbacks(callbacks) // OnVerificationStateChangedCallbacks
+        .build()
+
+    PhoneAuthProvider.verifyPhoneNumber(options)
+}
+
 @Composable
 private fun OutlinedTextFieldWithIcon(
     value: String,
     onValueChange: (String) -> Unit,
-    label: String,
     icon: ImageVector
 ) {
     val maxLength = 10
@@ -108,7 +165,7 @@ private fun OutlinedTextFieldWithIcon(
             value = textFieldValue.value,
             onValueChange = {
                 if (it.length <= maxLength) {
-                    textFieldValue.value = it
+                    textFieldValue.value = it // Corrected line: Update the state directly
                     onValueChange(it)
                 }
             },
@@ -121,9 +178,13 @@ private fun OutlinedTextFieldWithIcon(
                 keyboardType = KeyboardType.Number,
                 imeAction = ImeAction.Done
             ),
+            textStyle = TextStyle(fontSize = 18.sp),
             keyboardActions = KeyboardActions(onDone = { /* Handle Done action */ }),
             maxLines = 1,
-            modifier = Modifier.padding().height(55.dp).width(250.dp),
+            modifier = Modifier
+                .padding()
+                .height(55.dp)
+                .width(250.dp),
             leadingIcon = {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -132,13 +193,19 @@ private fun OutlinedTextFieldWithIcon(
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
-                        Modifier.padding(start = 12.dp, end = 4.dp),
+                        Modifier.padding(start = 12.dp, end = 6.dp),
                         tint = Color.Black
+                    )
+                    Divider(
+                        color = Color.Gray,
+                        modifier = Modifier
+                            .height(30.dp)
+                            .width(1.dp)
                     )
                     Text(
                         text = "+91",
                         fontSize = 18.sp,
-                        modifier = Modifier.alignByBaseline().padding(end = 18.dp)
+                        modifier = Modifier.padding(start = 6.dp, end = 4.dp)
                     )
                 }
             }

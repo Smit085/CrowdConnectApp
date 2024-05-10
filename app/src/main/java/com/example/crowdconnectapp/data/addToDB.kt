@@ -17,7 +17,7 @@ fun addToDB(viewModel: ViewModel, collection: String, sessionId: String) {
 
     val dataMap = when (viewModel) {
         is QuizViewModel -> {
-            val quizViewModel = viewModel as QuizViewModel
+            val quizViewModel = viewModel
             val questionsMap = convertQuestionsToMap(quizViewModel.questions.value)
 
             if (quizViewModel.selectedDate.isEmpty()) quizViewModel.selectedDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))

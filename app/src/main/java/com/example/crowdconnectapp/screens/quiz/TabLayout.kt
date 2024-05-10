@@ -1,5 +1,7 @@
 package com.example.crowdconnectapp.screens.quiz
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +37,7 @@ import androidx.navigation.NavHostController
 import com.example.crowdconnectapp.models.QuizViewModel
 import com.example.crowdconnectapp.ui.theme.VividBlue
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun TabLayout(
@@ -119,7 +122,16 @@ fun TabLayout(
                 modifier = Modifier.fillMaxSize()
             ) {
                 // Pass the quizViewModel to the screen composable function
-                tabItems[it].screen()
+                val temp = tabItems[it].screen()
+                if (temp == "ConfigureQuiz") {
+                    ConfigureQuiz()
+                }
+                if (temp == "ManageQuestions") {
+                    ManageQuestions()
+                }
+                if (temp == "PublishScreen") {
+                    PublishScreen(navController)
+                }
             }
         }
     }
