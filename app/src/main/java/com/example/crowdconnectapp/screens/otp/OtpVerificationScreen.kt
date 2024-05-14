@@ -1,6 +1,5 @@
 package com.example.crowdconnectapp.screens.otp
 
-import android.nfc.Tag
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.border
@@ -20,6 +19,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -48,7 +48,7 @@ import com.google.firebase.auth.PhoneAuthProvider
 fun OtpVerificationScreen(navController: NavHostController, verificationId: String?) {
     val context = LocalContext.current
     var otpValue by remember { mutableStateOf("") }
-    val verificationInProgress by remember { mutableStateOf(true) }
+    var isLoading by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -92,38 +92,53 @@ fun OtpVerificationScreen(navController: NavHostController, verificationId: Stri
                 textAlign = TextAlign.Center,
                 fontSize = 11.sp
             )
-                Text(
-                    text = " RESEND AGAIN",
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight(800),
-                    modifier = Modifier.clickable {
-                    }
-                )
+            Text(
+                text = " RESEND AGAIN",
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+                fontSize = 11.sp,
+                fontWeight = FontWeight(800),
+                modifier = Modifier.clickable {
+                    // Implement resend logic here
+                }
+            )
         }
         Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = {
-//                if (!verificationInProgress) {
-                    // Call function to verify OTP
-                    verifyOtp(navController,verificationId, otpValue)
-//                }
+                isLoading = true
+                hideKeyboard(context)
+                verifyOtp(navController, verificationId, otpValue) { success ->
+                    isLoading = false
+                    if (success) {
+                        navController.navigate("welcomeScreen")
+                    } else {
+                        // Handle verification failure
+                        Toast.makeText(context, "Failed to verify OTP. Please try again.", Toast.LENGTH_SHORT).show()
+                    }
+                }
             },
+            enabled = otpValue.length == 6 && !isLoading,
             shape = RoundedCornerShape(5.dp),
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .width(250.dp)
         ) {
-            Text(text = "Verify", style = MaterialTheme.typography.titleMedium)
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(25.dp)
+                )
+            } else {
+                Text(text = "Verify", style = MaterialTheme.typography.titleMedium)
+            }
         }
     }
 }
 
-fun verifyOtp(navController: NavHostController, verificationId: String?, otp: String) {
+fun verifyOtp(navController: NavHostController, verificationId: String?, otp: String, onVerificationResult: (Boolean) -> Unit) {
     if (verificationId.isNullOrBlank()) {
-        // Handle error: Verification ID is null or blank
         Log.d("Error", "Verification ID is null or blank")
+        onVerificationResult(false)
         return
     }
 
@@ -132,12 +147,14 @@ fun verifyOtp(navController: NavHostController, verificationId: String?, otp: St
         .addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 Log.d("NAV", "isSuccessful")
-                navController.navigate("hostScreen")
+                onVerificationResult(true)
             } else {
                 Log.d("NAV", "UnSuccessful")
+                onVerificationResult(false)
             }
         }
 }
+
 @Composable
 fun OtpTextField(
     modifier: Modifier = Modifier,

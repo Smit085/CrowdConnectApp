@@ -2,7 +2,6 @@ package com.example.crowdconnectapp.navigation
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import com.example.crowdconnectapp.screens.quiz.CreateQuizQuestions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.navigation.NavType
@@ -10,19 +9,17 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.crowdconnectapp.models.QuizViewModel
 import com.example.crowdconnectapp.screens.*
 import com.example.crowdconnectapp.screens.otp.LoginScreen
 import com.example.crowdconnectapp.screens.otp.OtpVerificationScreen
+import com.example.crowdconnectapp.screens.quiz.CreateQuizQuestions
 import com.example.crowdconnectapp.screens.quiz.ManageQuestions
 import com.example.crowdconnectapp.screens.quiz.OrganizeQuizScreen
-
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NavHostController() {
     val navController = rememberNavController()
-    val quizViewModel = remember { QuizViewModel() }
     NavHost(navController = navController, startDestination = "hostScreen") {
         composable(route = "welcomeScreen") {
             WelcomeScreen(navController)

@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.ContentValues.TAG
 import android.content.Context
 import android.util.Log
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -48,7 +50,7 @@ import java.util.concurrent.TimeUnit
 fun LoginScreen(navController: NavHostController) {
     val context = LocalContext.current
     var phoneNumber by remember { mutableStateOf("") }
-    var isotpSent by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
     val auth = FirebaseAuth.getInstance()
     auth.setLanguageCode("en")
 
@@ -89,14 +91,14 @@ fun LoginScreen(navController: NavHostController) {
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
+            enabled = phoneNumber.length == 10 && !isLoading,
             onClick = {
-                if (phoneNumber.length == 10) {
-                    isotpSent = false
-                    // Call the composable function from here
-                    sendOtp(context, phoneNumber, auth) {verificationId ->
-                        isotpSent = true
-                        navController.navigate("otpVerificationScreen/$verificationId")
-                    }
+                isLoading = true
+                hideKeyboard(context)
+                // Call the composable function from here
+                sendOtp(context, phoneNumber, auth) { verificationId ->
+                    isLoading = false
+                    navController.navigate("otpVerificationScreen/$verificationId")
                 }
             },
             shape = RoundedCornerShape(5.dp),
@@ -104,9 +106,20 @@ fun LoginScreen(navController: NavHostController) {
                 .align(Alignment.CenterHorizontally)
                 .width(250.dp)
         ) {
-            Text(text = "Get OTP", style = MaterialTheme.typography.titleMedium)
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(25.dp)
+                )
+            } else {
+                Text(text = "Get OTP", style = MaterialTheme.typography.titleMedium)
+            }
         }
     }
+}
+
+fun hideKeyboard(context: Context) {
+    val inputMethodManager = context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+    inputMethodManager.hideSoftInputFromWindow((context as Activity).currentFocus?.windowToken, 0)
 }
 
 fun sendOtp(context: Context, phoneNumber: String, auth: FirebaseAuth, onOtpSent: (String) -> Unit) {
@@ -114,26 +127,20 @@ fun sendOtp(context: Context, phoneNumber: String, auth: FirebaseAuth, onOtpSent
     val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
         override fun onVerificationCompleted(credential: PhoneAuthCredential) {
             // This callback will be invoked in two situations:
-            // 1 - Instant verification. In some cases, the phone number can be instantly
-            //     verified without needing to send or enter an OTP.
-            // 2 - Auto-retrieval. On some devices, Google Play services can automatically
-            //     detect the incoming verification SMS and perform verification without user action.
-            // OnVerificationStateChangedCallbacks
-//            Toast.makeText(context, "onVerificationCompleted", Toast.LENGTH_SHORT).show()
+            // 1 - Instant verification.
+            // 2 - Auto-retrieval.
         }
 
         override fun onVerificationFailed(e: FirebaseException) {
             // This callback is invoked in an invalid request for verification is made,
             // for instance if the phone number format is not valid.
-            // OnVerificationStateChangedCallbacks
-//            Toast.makeText(context, "onVerificationFailed", Toast.LENGTH_SHORT).show()
+            Log.e(TAG, "onVerificationFailed: ${e.message}", e)
+            // Show error toast or handle failure
+            Toast.makeText(context, "Failed to send OTP. Please try again.", Toast.LENGTH_SHORT).show()
         }
 
         override fun onCodeSent(verificationId: String, token: PhoneAuthProvider.ForceResendingToken) {
-            // The SMS verification code has been sent to the provided phone number, we
-            // now need to ask the user to enter the code and then construct a credential
-            // by combining the code with a verification ID.
-//            Toast.makeText(context, "onCodeSent", Toast.LENGTH_SHORT).show()
+            // The SMS verification code has been sent to the provided phone number.
             onOtpSent(verificationId)
         }
     }
@@ -146,6 +153,7 @@ fun sendOtp(context: Context, phoneNumber: String, auth: FirebaseAuth, onOtpSent
 
     PhoneAuthProvider.verifyPhoneNumber(options)
 }
+
 
 @Composable
 private fun OutlinedTextFieldWithIcon(
