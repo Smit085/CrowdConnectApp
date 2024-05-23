@@ -1,4 +1,4 @@
-package com.example.crowdconnectapp.screens.quiz
+package com.example.crowdconnectapp.screens.host.quiz
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable

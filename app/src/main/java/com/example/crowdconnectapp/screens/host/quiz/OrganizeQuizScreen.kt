@@ -1,4 +1,4 @@
-package com.example.crowdconnectapp.screens.quiz
+package com.example.crowdconnectapp.screens.host.quiz
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable

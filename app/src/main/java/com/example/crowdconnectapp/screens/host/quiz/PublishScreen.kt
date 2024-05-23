@@ -1,4 +1,4 @@
-package com.example.crowdconnectapp.screens.quiz
+package com.example.crowdconnectapp.screens.host.quiz
 
 import android.content.Intent
 import androidx.compose.foundation.layout.Column
