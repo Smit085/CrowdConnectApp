@@ -3,12 +3,16 @@ package com.example.crowdconnectapp.navigation
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.crowdconnectapp.models.QuizViewModel
 import com.example.crowdconnectapp.screens.*
+import com.example.crowdconnectapp.screens.attendee.AttendQuiz
 import com.example.crowdconnectapp.screens.attendee.AttendeeScreen
 import com.example.crowdconnectapp.screens.attendee.BottomSheet
 import com.example.crowdconnectapp.screens.attendee.StartQuiz
@@ -21,11 +25,12 @@ import com.example.crowdconnectapp.screens.host.quiz.ManageQuestions
 import com.example.crowdconnectapp.screens.host.quiz.OrganizeQuizScreen
 import com.example.crowdconnectapp.screens.host.OrganizeVotingScreen
 
+@OptIn(ExperimentalComposeUiApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NavHostController() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "startQuiz") {
+    NavHost(navController = navController, startDestination = "attendeeScreen") {
         composable(route = "welcomeScreen") {
             WelcomeScreen(navController)
         }
@@ -63,15 +68,9 @@ fun NavHostController() {
         composable(route = "manageQuestionsScreen") {
             ManageQuestions()
         }
-        composable(route = "bottomSheet") {
-            BottomSheet(navController)
-        }
-        composable(route = "startsession/{qrcode}") { backStackEntry ->
+        composable(route = "startSession/{qrcode}") { backStackEntry ->
             val qrcode = backStackEntry.arguments?.getString("qrcode")
             StartSession(navController, qrcode)
-        }
-        composable(route = "startQuiz") {
-            StartQuiz(navController)
         }
     }
 }
