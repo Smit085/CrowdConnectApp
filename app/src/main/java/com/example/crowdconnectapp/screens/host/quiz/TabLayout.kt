@@ -5,6 +5,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -25,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -32,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.example.crowdconnectapp.models.QuizViewModel
@@ -45,7 +49,9 @@ fun TabLayout(
     tabItems: List<TabItem>,
     currentTabIndex: Int = 0
 ) {
+    val quizViewModel: QuizViewModel = hiltViewModel()
     var selectedTabIndex by remember { mutableIntStateOf(0) }
+    var openAddQuestionScreen by remember { mutableStateOf(false) }
     val pagerState =
         rememberPagerState(pageCount = { tabItems.size }, initialPage = currentTabIndex)
 
@@ -59,80 +65,115 @@ fun TabLayout(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Create Quiz",
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                        if (selectedTabIndex == 1) {
-                            TextButton(
-                                onClick = { navController.navigate("createQuizQuestions") },
-                            ) {
-                                Text(text = "Add question", color = Color.Blue)
+    if (openAddQuestionScreen) {
+        FullScreenAddQuestionScreen(
+            onClose = { openAddQuestionScreen = false },
+            quizViewModel = quizViewModel
+        )
+    } else {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Create Quiz",
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                            if (selectedTabIndex == 1) {
+                                TextButton(
+                                    onClick = {
+                                        openAddQuestionScreen = true
+                                    },
+                                ) {
+                                    Text(text = "Add question", color = Color.Blue)
+                                }
                             }
                         }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = VividBlue,
-                    titleContentColor = Color.White
-                )
-            )
-        }
-    ) { it ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(0.dp)
-                .padding(it)
-        ) {
-            TabRow(
-                selectedTabIndex = selectedTabIndex,
-                divider = {}
-            ) {
-                tabItems.forEachIndexed { index, item ->
-                    Tab(
-                        modifier = Modifier.background(VividBlue),
-                        selected = selectedTabIndex == index,
-                        onClick = {
-                            selectedTabIndex = index
-                        },
-                        text = {
-                            Text(
-                                style = MaterialTheme.typography.titleSmall,
-                                color = Color.White,
-                                text = item.title,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = VividBlue,
+                        titleContentColor = Color.White
                     )
-                }
+                )
             }
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize()
+        ) { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
             ) {
-                // Pass the quizViewModel to the screen composable function
-                val temp = tabItems[it].screen()
-                if (temp == "ConfigureQuiz") {
-                    ConfigureQuiz()
+                TabRow(
+                    selectedTabIndex = selectedTabIndex,
+                    divider = {}
+                ) {
+                    tabItems.forEachIndexed { index, item ->
+                        Tab(
+                            modifier = Modifier.background(VividBlue),
+                            selected = selectedTabIndex == index,
+                            onClick = {
+                                selectedTabIndex = index
+                            },
+                            text = {
+                                Text(
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = Color.White,
+                                    text = item.title,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        )
+                    }
                 }
-                if (temp == "ManageQuestions") {
-                    ManageQuestions()
-                }
-                if (temp == "PublishScreen") {
-                    PublishScreen(navController)
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    // Pass the quizViewModel to the screen composable function
+                    val temp = tabItems[it].screen()
+                    when (temp) {
+                        "ConfigureQuiz" -> ConfigureQuiz(quizViewModel)
+                        "ManageQuestions" -> ManageQuestions(quizViewModel)
+                        "PublishScreen" -> PublishScreen(navController, quizViewModel)
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun FullScreenAddQuestionScreen(onClose: () -> Unit, quizViewModel: QuizViewModel) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(16.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = onClose) {
+                    Text("Close", color = Color.Red)
+                }
+            }
+            CreateQuizQuestions(
+                onQuestionAdded = {
+                    onClose()
+                },
+                quizViewModel = quizViewModel
+            )
         }
     }
 }

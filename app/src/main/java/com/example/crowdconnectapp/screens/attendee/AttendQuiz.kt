@@ -32,42 +32,52 @@ import kotlinx.coroutines.delay
 @Composable
 fun AttendQuiz(navController: NavController) {
     val quizViewModel: QuizViewModel = hiltViewModel()
-    var timeProgress by remember { mutableStateOf(0.1f) }
-    var remainingTime by remember { mutableStateOf(10 * 60L) }
-    var selectedOption by remember { mutableStateOf("") }
-    var currentQuestionIndex by remember { mutableStateOf(0) }
     val questions by quizViewModel.questions.collectAsState()
     val isLoading by quizViewModel.isLoading.collectAsState()
 
-    LaunchedEffect(Unit) {
-        while (timeProgress < 1f) {
-            delay(1500L)
-            timeProgress += 0.1f
-        }
+    // Assume these values are fetched from the database
+    val duration = 20
+    val durationIn = "sec"
+    val isDurationEnabled = true
+
+    val totalTime = when (durationIn) {
+        "sec" -> duration * 1L
+        "min" -> duration * 60L
+        "hour" -> duration * 60L * 60L
+        else -> duration * 60L
     }
 
-    LaunchedEffect(Unit) {
-        while (remainingTime > 0) {
-            delay(1000L)
-            remainingTime -= 1
-        }
-    }
+    var remainingTime by remember { mutableStateOf(totalTime) }
+    var timeProgress by remember { mutableStateOf(0f) }
+    var selectedOption by remember { mutableStateOf("") }
+    var currentQuestionIndex by remember { mutableStateOf(0) }
 
-    val minutes = remainingTime / 60
-    val seconds = remainingTime % 60
-
-    if (remainingTime <= 0) {
-        // Navigate to some result screen or show a dialog
-    }
-
-    val currentQuestion = questions.getOrNull(currentQuestionIndex)
-
+    // Function to handle moving to the next question
     fun nextQuestion() {
         if (currentQuestionIndex < questions.size - 1) {
             currentQuestionIndex += 1
             selectedOption = ""
+            timeProgress = 0f
+            remainingTime = totalTime
         }
     }
+
+    LaunchedEffect(isDurationEnabled, currentQuestionIndex) {
+        if (isDurationEnabled) {
+            timeProgress = 0f
+            remainingTime = totalTime
+            while (remainingTime > 0) {
+                delay(1000L)
+                remainingTime -= 1
+                timeProgress = (totalTime - remainingTime).toFloat() / totalTime
+                if (remainingTime <= 0) {
+                    nextQuestion()
+                }
+            }
+        }
+    }
+
+    val currentQuestion = questions.getOrNull(currentQuestionIndex)
 
     Scaffold(
         topBar = {
@@ -83,12 +93,14 @@ fun AttendQuiz(navController: NavController) {
                     }
                 },
                 actions = {
-//                    Text(
-//                        text = "Timeout: $minutes:${"%02d".format(seconds)}",
-//                        modifier = Modifier.padding(end = 16.dp),
-//                        fontWeight = FontWeight.Bold,
-//                        fontSize = 14.sp
-//                    )
+                    if (isDurationEnabled) {
+                        Text(
+                            text = "Timeout: ${remainingTime / 60}:${"%02d".format(remainingTime % 60)}",
+                            modifier = Modifier.padding(end = 16.dp),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
             )
         }
@@ -100,15 +112,29 @@ fun AttendQuiz(navController: NavController) {
                 .padding(innerPadding)
         ) {
             if (isLoading) {
-                Text(
-                    modifier = Modifier.padding(21.dp),
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Justify,
-                    text = "Loading questions...",
-                    style = MaterialTheme.typography.titleMedium
-                )
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Loading questions...",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             } else {
                 currentQuestion?.let { question ->
+                    LinearProgressIndicator(
+                        progress = timeProgress,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(7.dp)
+                            .padding(horizontal = 20.dp),
+                        color = Color.Green
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -122,91 +148,84 @@ fun AttendQuiz(navController: NavController) {
                             style = MaterialTheme.typography.titleLarge
                         )
                         Row {
-                            IconButton(onClick = { if (currentQuestionIndex > 0) currentQuestionIndex -= 1 }) {
-                                Icon(imageVector = Icons.Default.KeyboardArrowLeft, contentDescription = "Previous")
+                            if (!isDurationEnabled || selectedOption.isNotEmpty()) {
+                                IconButton(onClick = { if (currentQuestionIndex > 0) currentQuestionIndex -= 1 }) {
+                                    Icon(imageVector = Icons.Default.KeyboardArrowLeft, contentDescription = "Previous")
+                                }
                             }
-                            IconButton(onClick = { nextQuestion() }) {
+                            IconButton(
+                                onClick = { if (!isDurationEnabled || selectedOption.isNotEmpty()) nextQuestion() },
+                                enabled = !isDurationEnabled || selectedOption.isNotEmpty()
+                            ) {
                                 Icon(imageVector = Icons.Default.KeyboardArrowRight, contentDescription = "Next")
                             }
                         }
                     }
-                    Card(
-                        modifier = Modifier
-                            .padding(horizontal = 24.dp),
-                        shape = RoundedCornerShape(8.dp),
-                    ) {
-                        LinearProgressIndicator(
-                            progress = timeProgress,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(7.dp),
-                            color = Color.Green,
-                        )
-                    }
 
-
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        modifier = Modifier.padding(21.dp),
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Justify,
+                        modifier = Modifier
+                            .padding(horizontal = 21.dp)
+                            .fillMaxWidth(),
                         text = question.text,
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Justify
                     )
 
-                    question.options.forEach { option ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(70.dp)
-                                .padding(horizontal = 20.dp, vertical = 5.dp)
-                                .clickable { selectedOption = option },
-                            colors = CardDefaults.cardColors(
-                                containerColor = if (selectedOption == option) Color.Green else Color.White
-                            ),
-                            shape = RoundedCornerShape(corner = CornerSize(7.dp)),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxSize(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                        question.options.forEach { option ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 5.dp)
+                                    .clickable { selectedOption = option },
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (selectedOption == option) Color.Green else Color.White
+                                ),
+                                shape = RoundedCornerShape(corner = CornerSize(7.dp)),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                             ) {
-                                Text(
-                                    modifier = Modifier.padding(start = 7.dp),
-                                    text = option,
-                                    fontWeight = FontWeight.Bold,
-                                    textAlign = TextAlign.Justify
-                                )
-                                RadioButton(
-                                    selected = selectedOption == option,
-                                    onClick = { selectedOption = option }
-                                )
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = option,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Start
+                                    )
+                                    RadioButton(
+                                        selected = selectedOption == option,
+                                        onClick = { selectedOption = option }
+                                    )
+                                }
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(70.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                    Row(
+                    Button(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(17.dp),
-                        horizontalArrangement = Arrangement.Center
+                            .fillMaxWidth()
+                            .height(57.dp)
+                            .padding(horizontal = 20.dp),
+                        shape = RoundedCornerShape(45.dp),
+                        onClick = { nextQuestion() },
+                        enabled = !isDurationEnabled || selectedOption.isNotEmpty()
                     ) {
-                        Button(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(57.dp),
-                            shape = RoundedCornerShape(45.dp),
-                            onClick = { nextQuestion() }
-                        ) {
-                            Text(
-                                text = "Continue",
-                                fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        }
+                        Text(
+                            text = "Continue",
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
                     }
                 }
             }

@@ -1,5 +1,6 @@
 package com.example.crowdconnectapp.screens.host.quiz
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,6 +14,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,13 +30,8 @@ import com.example.crowdconnectapp.ui.theme.Blue
 import com.example.crowdconnectapp.ui.theme.VividBlue
 
 @Composable
-fun ManageQuestions() {
-
-    val quizViewModel: QuizViewModel = hiltViewModel()
+fun ManageQuestions(quizViewModel: QuizViewModel) {
     val questions by quizViewModel.questions.collectAsState()
-
-    val onEditQuestion: (Question) -> Unit = {}
-    val onDeleteQuestion: (Question) -> Unit = {}
 
     if (questions.isEmpty()) {
         Box(
@@ -46,14 +45,13 @@ fun ManageQuestions() {
             )
         }
     } else {
-        ManageQuestionsScreen(questions = questions, onEditQuestion = onEditQuestion, onDeleteQuestion = onDeleteQuestion)
+        ManageQuestionsScreen(questions = questions, onDeleteQuestion = quizViewModel::deleteQuestion)
     }
 }
 
 @Composable
 fun ManageQuestionsScreen(
     questions: List<Question>,
-    onEditQuestion: (Question) -> Unit,
     onDeleteQuestion: (Question) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
@@ -85,7 +83,6 @@ fun ManageQuestionsScreen(
                 items(questions) { question ->
                     QuestionItem(
                         question = question,
-                        onEditClick = { onEditQuestion(question) },
                         onDeleteClick = { onDeleteQuestion(question) }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -98,13 +95,13 @@ fun ManageQuestionsScreen(
 @Composable
 fun QuestionItem(
     question: Question,
-    onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
+    var showDialog by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onEditClick() },
+            .fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = Blue,
         ),
@@ -126,23 +123,12 @@ fun QuestionItem(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
-                Row(
-                    modifier = Modifier.weight(0.3f)
-                ) {
-                    IconButton(onClick = onDeleteClick) {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = "Delete",
-                            tint = Color.Red
-                        )
-                    }
-                    IconButton(onClick = onDeleteClick) {
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = "Edit",
-                            tint = Color.Blue
-                        )
-                    }
+                IconButton(onClick = { showDialog = true }) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Delete",
+                        tint = Color.Red
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -160,4 +146,32 @@ fun QuestionItem(
             )
         }
     }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Confirm Deletion") },
+            text = { Text("Are you sure you want to delete this question?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDialog = false
+                        onDeleteClick()
+                    }
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = { showDialog = false }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
+
+
+

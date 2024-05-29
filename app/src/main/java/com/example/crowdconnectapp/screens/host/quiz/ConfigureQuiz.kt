@@ -39,21 +39,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.TextStyle
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.crowdconnectapp.components.LabeledCheckbox
 import com.example.crowdconnectapp.components.LabeledSwitch
 import com.example.crowdconnectapp.components.Picker
 import com.example.crowdconnectapp.components.customDatePicker
 import com.example.crowdconnectapp.components.customTimePicker
 import com.example.crowdconnectapp.models.QuizViewModel
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun ConfigureQuiz() {
-    val quizViewModel: QuizViewModel = hiltViewModel()
+fun ConfigureQuiz(quizViewModel: QuizViewModel) {
     var title by remember { mutableStateOf(quizViewModel.title) }
     var description by remember { mutableStateOf(quizViewModel.description) }
     var isScheduleEnabled by remember { mutableStateOf(quizViewModel.isScheduleEnabled) }

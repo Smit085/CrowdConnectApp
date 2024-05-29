@@ -1,6 +1,7 @@
 package com.example.crowdconnectapp.screens.host.quiz
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -16,15 +17,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.crowdconnectapp.models.Question
 import com.example.crowdconnectapp.models.QuizViewModel
 
 @Composable
-fun CreateQuizQuestions(
-    onQuestionAdded: () -> Unit
-) {
-    val quizViewModel: QuizViewModel = hiltViewModel()
+fun CreateQuizQuestions(onQuestionAdded: () -> Unit, quizViewModel: QuizViewModel) {
     var question by remember { mutableStateOf("") }
     var options by remember { mutableStateOf(listOf("")) }
     var correctAnswerIndex by remember { mutableIntStateOf(-1) }
@@ -36,6 +33,7 @@ fun CreateQuizQuestions(
         modifier = Modifier
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Text(
             text = "Add Your Question",
@@ -88,23 +86,25 @@ fun CreateQuizQuestions(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Button(shape = RoundedCornerShape(8.dp),
+        Button(
+            shape = RoundedCornerShape(8.dp),
             onClick = {
-                if (question.isNotBlank() && options.size >= 3 && options.last() != "" && correctAnswerIndex != -1) {
+                if (options.size < 3) {
+                    Toast.makeText(context, "Please create at least 3 options", Toast.LENGTH_SHORT).show()
+                } else if (options.any { it.isBlank() }) {
+                    Toast.makeText(context, "Please ensure all options are filled", Toast.LENGTH_SHORT).show()
+                } else if (correctAnswerIndex == -1) {
+                    Toast.makeText(context, "Please select a correct answer", Toast.LENGTH_SHORT).show()
+                } else if (question.isNotBlank() && correctAnswerIndex != -1) {
                     val newQuestion = Question(question, options, correctAnswerIndex)
                     quizViewModel.addQuestion(newQuestion)
                     onQuestionAdded()
-                } else {
-                    Toast.makeText(context, "Please create at least 3 options", Toast.LENGTH_SHORT)
-                        .show()
                 }
             },
             enabled = true
-//            enabled = question.isNotBlank() && options.size >= 3 && correctAnswerIndex != -1
         ) {
             Text("ADD")
         }
-
 
         if (isDeleteDialogVisible) {
             DeleteOptionDialog(
@@ -187,8 +187,3 @@ fun DeleteOptionDialog(
         }
     )
 }
-
-
-
-
-

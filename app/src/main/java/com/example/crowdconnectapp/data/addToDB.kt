@@ -17,27 +17,29 @@ fun addToDB(viewModel: ViewModel, collection: String, sessionId: String) {
 
     val dataMap = when (viewModel) {
         is QuizViewModel -> {
-            val quizViewModel = viewModel
-            val questionsMap = quizViewModel.questions.value?.let { convertQuestionsToMap(it) }
+            val questionsMap = viewModel.questions.value.let { convertQuestionsToMap(it) }
 
-            if (quizViewModel.selectedDate.isEmpty()) quizViewModel.selectedDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-            if (quizViewModel.selectedTime.isEmpty()) quizViewModel.selectedTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))
+            if (viewModel.selectedDate.isEmpty()) viewModel.selectedDate =
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+            if (viewModel.selectedTime.isEmpty()) viewModel.selectedTime =
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))
+            if (viewModel.timeout == 0) viewModel.timeout = 10
             mapOf(
-                "title" to quizViewModel.title,
-                "description" to quizViewModel.description,
-                "selectedDate" to quizViewModel.selectedDate,
-                "selectedTime" to quizViewModel.selectedTime,
-                "duration" to quizViewModel.duration,
-                "durationIn" to quizViewModel.durationIn,
-                "timeout" to quizViewModel.timeout,
-                "timeoutIn" to quizViewModel.timeoutIn,
-                "isScheduleEnabled" to quizViewModel.isScheduleEnabled,
-                "isDurationEnabled" to quizViewModel.isDurationEnabled,
-                "isTimeoutEnabled" to quizViewModel.isTimeoutEnabled,
-                "isShuffleQuestionsEnabled" to quizViewModel.isShuffleQuestionsEnabled,
-                "isShuffleOptionsEnabled" to quizViewModel.isShuffleOptionsEnabled,
-                "isEvaluateEnabled" to quizViewModel.isEvaluateEnabled,
-                "isKioskEnabled" to quizViewModel.isKioskEnabled,
+                "title" to viewModel.title,
+                "description" to viewModel.description,
+                "selectedDate" to viewModel.selectedDate,
+                "selectedTime" to viewModel.selectedTime,
+                "duration" to viewModel.duration,
+                "durationIn" to viewModel.durationIn,
+                "timeout" to viewModel.timeout,
+                "timeoutIn" to viewModel.timeoutIn,
+                "isScheduleEnabled" to viewModel.isScheduleEnabled,
+                "isDurationEnabled" to viewModel.isDurationEnabled,
+                "isTimeoutEnabled" to viewModel.isTimeoutEnabled,
+                "isShuffleQuestionsEnabled" to viewModel.isShuffleQuestionsEnabled,
+                "isShuffleOptionsEnabled" to viewModel.isShuffleOptionsEnabled,
+                "isEvaluateEnabled" to viewModel.isEvaluateEnabled,
+                "isKioskEnabled" to viewModel.isKioskEnabled,
                 "questions" to questionsMap
             )
         }

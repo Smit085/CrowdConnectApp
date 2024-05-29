@@ -20,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.crowdconnectapp.components.qrcode.FlipCard
@@ -31,14 +30,14 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Build
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.navigation.NavHostController
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun PublishScreen(navController: NavHostController) {
-    val quizViewModel: QuizViewModel = hiltViewModel()
-
+fun PublishScreen(navController: NavHostController, quizViewModel: QuizViewModel) {
+    val context = LocalContext.current
     if (quizViewModel.sessioncode == "") {
         quizViewModel.sessioncode = generateCode("QZ")
     }
@@ -87,6 +86,7 @@ fun PublishScreen(navController: NavHostController) {
             onClick = {
                 addToDB(quizViewModel,"Sessions",quizViewModel.sessioncode)
                 navController.navigate("hostScreen")
+                Toast.makeText(context, "Session Created", Toast.LENGTH_SHORT).show()
             },
             shape = RoundedCornerShape(5.dp),
             modifier = Modifier.align(Alignment.CenterHorizontally)

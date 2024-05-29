@@ -2,6 +2,7 @@ package com.example.crowdconnectapp.models
 
 import android.util.Log
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -27,9 +28,9 @@ class QuizViewModel @Inject constructor() : ViewModel() {
     var sessioncode by mutableStateOf("")
     var selectedDate by mutableStateOf("")
     var selectedTime by mutableStateOf("")
-    var duration by mutableStateOf(0)
+    var duration by mutableIntStateOf(0)
     var durationIn by mutableStateOf("")
-    var timeout by mutableStateOf(0)
+    var timeout by mutableIntStateOf(0)
     var timeoutIn by mutableStateOf("")
 
     var isTimeoutEnabled by mutableStateOf(false)
@@ -81,7 +82,6 @@ class QuizViewModel @Inject constructor() : ViewModel() {
                             correctAnswerIndex = correctAnswerIndex
                         )
                     } ?: emptyList()
-
                     _questions.value = fetchedQuestions
                     Log.d("QuizViewModel", "Total Questions fetched: ${fetchedQuestions.size}")
                 } else {
@@ -98,6 +98,10 @@ class QuizViewModel @Inject constructor() : ViewModel() {
 
     fun addQuestion(question: Question) {
     _questions.value = _questions.value.plus(question)
+    }
+
+    fun deleteQuestion(question: Question) {
+        _questions.value = _questions.value.filterNot { it == question }
     }
 
     fun clearQuestions() {
