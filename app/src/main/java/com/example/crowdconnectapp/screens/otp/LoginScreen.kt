@@ -36,6 +36,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.crowdconnectapp.models.AuthViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
@@ -44,7 +45,7 @@ import com.google.firebase.FirebaseException
 import java.util.concurrent.TimeUnit
 
 @Composable
-fun LoginScreen(navController: NavHostController) {
+fun LoginScreen(authViewModel: AuthViewModel, navController: NavHostController) {
     val context = LocalContext.current
     var phoneNumber by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
@@ -92,7 +93,6 @@ fun LoginScreen(navController: NavHostController) {
             onClick = {
                 isLoading = true
                 hideKeyboard(context)
-                // Call the composable function from here
                 sendOtp(context, phoneNumber, auth) { verificationId ->
                     isLoading = false
                     navController.navigate("otpVerificationScreen/$verificationId")
@@ -120,37 +120,27 @@ fun hideKeyboard(context: Context) {
 }
 
 fun sendOtp(context: Context, phoneNumber: String, auth: FirebaseAuth, onOtpSent: (String) -> Unit) {
-
     val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
-        override fun onVerificationCompleted(credential: PhoneAuthCredential) {
-            // This callback will be invoked in two situations:
-            // 1 - Instant verification.
-            // 2 - Auto-retrieval.
-        }
+        override fun onVerificationCompleted(credential: PhoneAuthCredential) {}
 
         override fun onVerificationFailed(e: FirebaseException) {
-            // This callback is invoked in an invalid request for verification is made,
-            // for instance if the phone number format is not valid.
             Log.e(TAG, "onVerificationFailed: ${e.message}", e)
-            // Show error toast or handle failure
             Toast.makeText(context, "Failed to send OTP. Please try again.", Toast.LENGTH_SHORT).show()
         }
 
         override fun onCodeSent(verificationId: String, token: PhoneAuthProvider.ForceResendingToken) {
-            // The SMS verification code has been sent to the provided phone number.
             onOtpSent(verificationId)
         }
     }
     val options = PhoneAuthOptions.newBuilder(auth)
-        .setPhoneNumber("+91$phoneNumber") // Phone number to verify
-        .setTimeout(60L, TimeUnit.SECONDS) // Timeout and unit
-        .setActivity(context as Activity) // Activity (for callback binding)
-        .setCallbacks(callbacks) // OnVerificationStateChangedCallbacks
+        .setPhoneNumber("+91$phoneNumber")
+        .setTimeout(60L, TimeUnit.SECONDS)
+        .setActivity(context as Activity)
+        .setCallbacks(callbacks)
         .build()
 
     PhoneAuthProvider.verifyPhoneNumber(options)
 }
-
 
 @Composable
 private fun OutlinedTextFieldWithIcon(
@@ -170,7 +160,7 @@ private fun OutlinedTextFieldWithIcon(
             value = textFieldValue.value,
             onValueChange = {
                 if (it.length <= maxLength) {
-                    textFieldValue.value = it // Corrected line: Update the state directly
+                    textFieldValue.value = it
                     onValueChange(it)
                 }
             },
@@ -184,7 +174,7 @@ private fun OutlinedTextFieldWithIcon(
                 imeAction = ImeAction.Done
             ),
             textStyle = TextStyle(fontSize = 18.sp),
-            keyboardActions = KeyboardActions(onDone = { /* Handle Done action */ }),
+            keyboardActions = KeyboardActions(onDone = { }),
             maxLines = 1,
             modifier = Modifier
                 .padding()

@@ -3,36 +3,54 @@ package com.example.crowdconnectapp.navigation
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.crowdconnectapp.screens.*
+import com.example.crowdconnectapp.models.AuthViewModel
+import com.example.crowdconnectapp.screens.SplashScreen
+import com.example.crowdconnectapp.screens.WelcomeScreen
 import com.example.crowdconnectapp.screens.attendee.AttendeeScreen
 import com.example.crowdconnectapp.screens.attendee.StartSession
 import com.example.crowdconnectapp.screens.otp.LoginScreen
 import com.example.crowdconnectapp.screens.otp.OtpVerificationScreen
-import com.example.crowdconnectapp.screens.host.quiz.CreateQuizQuestions
 import com.example.crowdconnectapp.screens.host.HostScreen
 import com.example.crowdconnectapp.screens.host.quiz.OrganizeQuizScreen
 import com.example.crowdconnectapp.screens.host.OrganizeVotingScreen
 
-@OptIn(ExperimentalComposeUiApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun NavHostController() {
+fun AppNavigation(authViewModel: AuthViewModel) {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "attendeeScreen") {
+    val isAuthenticated by authViewModel.isAuthenticated.collectAsState()
+
+//    LaunchedEffect(key1 = isAuthenticated) {
+//        if (isAuthenticated) {
+//            navController.navigate("welcomeScreen") {
+//                popUpTo("loginScreen") { inclusive = true }
+//            }
+//        } else {
+//            navController.navigate("loginScreen") {
+//                popUpTo("welcomeScreen") { inclusive = true }
+//            }
+//        }
+//    }
+    NavHost(navController, startDestination = "splashScreen") {
+        composable("splashScreen") {
+            SplashScreen(navController, authViewModel)
+        }
         composable(route = "welcomeScreen") {
-            WelcomeScreen(navController)
+            WelcomeScreen(navController,authViewModel)
         }
         composable(route = "hostScreen") {
             HostScreen(navController)
         }
-        composable(route = "loginscreen") {
-            LoginScreen(navController)
+        composable(route = "loginScreen") {
+            LoginScreen(authViewModel, navController)
         }
         composable(
             route = "otpVerificationScreen/{verificationId}",
@@ -53,7 +71,7 @@ fun NavHostController() {
         composable(route = "organizeVotingScreen") {
             OrganizeVotingScreen()
         }
-        composable(route = "startSession/{qrcode}") { backStackEntry ->
+        composable(route = "startSession/{qrcode}", arguments = listOf(navArgument("qrcode") { type = NavType.StringType })) { backStackEntry ->
             val qrcode = backStackEntry.arguments?.getString("qrcode")
             StartSession(navController, qrcode)
         }

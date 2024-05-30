@@ -1,5 +1,6 @@
 package com.example.crowdconnectapp.di
 
+import com.example.crowdconnectapp.models.AuthViewModel
 import com.example.crowdconnectapp.models.QuizViewModel
 import dagger.Module
 import dagger.Provides
@@ -16,5 +17,10 @@ object ActivityModule {
     @Provides
     fun provideQuizViewModel(): QuizViewModel {
         return QuizViewModel()
+    }
+    @Singleton
+    @Provides
+    fun provideAuthViewModel(): AuthViewModel {
+        return AuthViewModel()
     }
 }

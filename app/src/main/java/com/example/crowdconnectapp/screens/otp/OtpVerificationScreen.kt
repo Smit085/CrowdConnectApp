@@ -72,7 +72,7 @@ fun OtpVerificationScreen(navController: NavHostController, verificationId: Stri
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Please enter the OTP sent to you", // Corrected text
+            text = "Please enter the OTP sent to you",
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center,
             fontSize = 11.sp
@@ -198,9 +198,8 @@ private fun CharView(
 ) {
     val isFocused = text.length == index
     val char = when {
-        index == text.length -> "0"
-        index > text.length -> "0"
-        else -> text[index].toString()
+        index < text.length -> text[index].toString()
+        else -> ""
     }
     Text(
         modifier = Modifier
@@ -222,3 +221,4 @@ private fun CharView(
         textAlign = TextAlign.Center
     )
 }
+
