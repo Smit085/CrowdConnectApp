@@ -2,12 +2,11 @@ package com.example.crowdconnectapp.screens.attendee
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
@@ -34,16 +33,14 @@ fun AttendQuiz(navController: NavController) {
     val quizViewModel: QuizViewModel = hiltViewModel()
     val questions by quizViewModel.questions.collectAsState()
     val isLoading by quizViewModel.isLoading.collectAsState()
-
-    // Assume these values are fetched from the database
-    val duration = 20
-    val durationIn = "sec"
-    val isDurationEnabled = true
+    val duration = quizViewModel.duration
+    val durationIn = quizViewModel.durationIn
+    val isDurationEnabled = quizViewModel.isDurationEnabled
 
     val totalTime = when (durationIn) {
         "sec" -> duration * 1L
         "min" -> duration * 60L
-        "hour" -> duration * 60L * 60L
+        "hrs" -> duration * 60L * 60L
         else -> duration * 60L
     }
 
@@ -51,6 +48,7 @@ fun AttendQuiz(navController: NavController) {
     var timeProgress by remember { mutableStateOf(0f) }
     var selectedOption by remember { mutableStateOf("") }
     var currentQuestionIndex by remember { mutableStateOf(0) }
+    var answeredQuestions by remember { mutableStateOf(setOf<Int>()) }
 
     // Function to handle moving to the next question
     fun nextQuestion() {
@@ -78,6 +76,7 @@ fun AttendQuiz(navController: NavController) {
     }
 
     val currentQuestion = questions.getOrNull(currentQuestionIndex)
+    val allQuestionsAnswered = answeredQuestions.size == questions.size
 
     Scaffold(
         topBar = {
@@ -93,14 +92,7 @@ fun AttendQuiz(navController: NavController) {
                     }
                 },
                 actions = {
-                    if (isDurationEnabled) {
-                        Text(
-                            text = "Timeout: ${remainingTime / 60}:${"%02d".format(remainingTime % 60)}",
-                            modifier = Modifier.padding(end = 16.dp),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
-                        )
-                    }
+                    // If needed, add additional actions here
                 }
             )
         }
@@ -108,7 +100,7 @@ fun AttendQuiz(navController: NavController) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.White)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
         ) {
             if (isLoading) {
@@ -124,17 +116,25 @@ fun AttendQuiz(navController: NavController) {
                 }
             } else {
                 currentQuestion?.let { question ->
-                    LinearProgressIndicator(
-                        progress = timeProgress,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(7.dp)
-                            .padding(horizontal = 20.dp),
-                        color = Color.Green
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
+                    if (isDurationEnabled) {
+                        Card(
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .padding(horizontal = 20.dp)
+                        ) {
+                            LinearProgressIndicator(
+                                progress = timeProgress,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(7.dp),
+                                color = Color(0xFF019B00),
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    else{
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -148,16 +148,23 @@ fun AttendQuiz(navController: NavController) {
                             style = MaterialTheme.typography.titleLarge
                         )
                         Row {
-                            if (!isDurationEnabled || selectedOption.isNotEmpty()) {
-                                IconButton(onClick = { if (currentQuestionIndex > 0) currentQuestionIndex -= 1 }) {
-                                    Icon(imageVector = Icons.Default.KeyboardArrowLeft, contentDescription = "Previous")
-                                }
+                            IconButton(
+                                onClick = { if (currentQuestionIndex > 0) currentQuestionIndex -= 1 },
+                                enabled = !isDurationEnabled || (isDurationEnabled && selectedOption.isNotEmpty() && !answeredQuestions.contains(currentQuestionIndex))
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.KeyboardArrowLeft,
+                                    contentDescription = "Previous"
+                                )
                             }
                             IconButton(
                                 onClick = { if (!isDurationEnabled || selectedOption.isNotEmpty()) nextQuestion() },
                                 enabled = !isDurationEnabled || selectedOption.isNotEmpty()
                             ) {
-                                Icon(imageVector = Icons.Default.KeyboardArrowRight, contentDescription = "Next")
+                                Icon(
+                                    imageVector = Icons.Default.KeyboardArrowRight,
+                                    contentDescription = "Next"
+                                )
                             }
                         }
                     }
@@ -177,33 +184,44 @@ fun AttendQuiz(navController: NavController) {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                        question.options.forEach { option ->
+                        question.options.forEachIndexed { index, option ->
+                            val optionLetter = ('A' + index).toString()
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 5.dp)
-                                    .clickable { selectedOption = option },
+                                    .clickable {
+                                        if (!answeredQuestions.contains(currentQuestionIndex)) {
+                                            selectedOption = option
+                                            answeredQuestions = answeredQuestions + currentQuestionIndex
+                                        }
+                                    }
+                                    .border(
+                                        width = 1.dp,
+                                        color = if (selectedOption == option) Color.Green else MaterialTheme.colorScheme.primary,
+                                        shape = RoundedCornerShape(4.dp)
+                                    ),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = if (selectedOption == option) Color.Green else Color.White
-                                ),
-                                shape = RoundedCornerShape(corner = CornerSize(7.dp)),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                    containerColor = Color.Transparent
+                                )
                             ) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 12.dp, vertical = 8.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
+                                    OptionIndicator(
+                                        indicator = optionLetter,
+                                        isSelected = selectedOption == option
+                                    )
+                                    Spacer(modifier = Modifier.width(14.dp))
                                     Text(
                                         text = option,
-                                        fontWeight = FontWeight.Bold,
-                                        textAlign = TextAlign.Start
-                                    )
-                                    RadioButton(
-                                        selected = selectedOption == option,
-                                        onClick = { selectedOption = option }
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Normal,
+                                        textAlign = TextAlign.Justify,
+                                        modifier = Modifier.weight(1f)
                                     )
                                 }
                             }
@@ -211,24 +229,54 @@ fun AttendQuiz(navController: NavController) {
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
-
-                    Button(
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(57.dp)
-                            .padding(horizontal = 20.dp),
-                        shape = RoundedCornerShape(45.dp),
-                        onClick = { nextQuestion() },
-                        enabled = !isDurationEnabled || selectedOption.isNotEmpty()
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(
-                            text = "Continue",
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
+                        Button(
+                            shape = RoundedCornerShape(5.dp),
+                            modifier = Modifier.width(350.dp),
+                            onClick = {
+                                if (currentQuestionIndex == questions.size - 1) {
+                                    // Submit action here
+                                } else {
+                                    nextQuestion()
+                                }
+                            },
+                            enabled = !isDurationEnabled || selectedOption.isNotEmpty()
+                        ) {
+                            Text(
+                                text = if (currentQuestionIndex == questions.size - 1) "Submit" else "Continue",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun OptionIndicator(indicator: String, isSelected: Boolean) {
+    Box(
+        modifier = Modifier
+            .size(30.dp)
+            .background(
+                color = if (isSelected) Color(0xFF019B00) else MaterialTheme.colorScheme.primary,
+                shape = RoundedCornerShape(4.dp)
+            )
+            .padding(2.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = indicator,
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+            textAlign = TextAlign.Center
+        )
     }
 }

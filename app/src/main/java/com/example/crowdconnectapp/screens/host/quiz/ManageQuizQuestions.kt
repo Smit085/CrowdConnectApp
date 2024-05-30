@@ -81,12 +81,15 @@ fun ManageQuestionsScreen(
                     .padding(horizontal = 16.dp)
             ) {
                 items(questions) { question ->
+                    val questionNumber = questions.indexOf(question) + 1
                     QuestionItem(
                         question = question,
+                        questionNumber = questionNumber,
                         onDeleteClick = { onDeleteQuestion(question) }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                 }
+
             }
         }
     }
@@ -95,6 +98,7 @@ fun ManageQuestionsScreen(
 @Composable
 fun QuestionItem(
     question: Question,
+    questionNumber: Int,
     onDeleteClick: () -> Unit
 ) {
     var showDialog by remember { mutableStateOf(false) }
@@ -117,7 +121,7 @@ fun QuestionItem(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = question.text,
+                    text = "$questionNumber. ${question.text}",
                     style = MaterialTheme.typography.labelMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -172,6 +176,3 @@ fun QuestionItem(
         )
     }
 }
-
-
-

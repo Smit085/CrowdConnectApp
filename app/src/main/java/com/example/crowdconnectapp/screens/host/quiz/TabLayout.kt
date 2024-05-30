@@ -153,7 +153,7 @@ fun FullScreenAddQuestionScreen(onClose: () -> Unit, quizViewModel: QuizViewMode
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
+            .padding(4.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxSize()

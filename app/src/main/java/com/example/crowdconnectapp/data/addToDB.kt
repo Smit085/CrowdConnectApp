@@ -24,6 +24,8 @@ fun addToDB(viewModel: ViewModel, collection: String, sessionId: String) {
             if (viewModel.selectedTime.isEmpty()) viewModel.selectedTime =
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))
             if (viewModel.timeout == 0) viewModel.timeout = 10
+            if (viewModel.timeoutIn == "") viewModel.timeoutIn = "min"
+
             mapOf(
                 "title" to viewModel.title,
                 "description" to viewModel.description,

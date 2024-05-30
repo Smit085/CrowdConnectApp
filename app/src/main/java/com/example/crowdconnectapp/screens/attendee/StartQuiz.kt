@@ -99,7 +99,7 @@ fun StartQuiz(navController: NavController, qrcode: String) {
                             text = "Title: $title",
                             style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold)
                         )
-                        Row {
+                        Column {
                             Text(
                                 text = "Description: ", style = MaterialTheme.typography.titleSmall
                             )
