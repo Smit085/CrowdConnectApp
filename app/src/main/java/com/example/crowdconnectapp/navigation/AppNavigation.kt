@@ -26,25 +26,13 @@ import com.example.crowdconnectapp.screens.host.OrganizeVotingScreen
 @Composable
 fun AppNavigation(authViewModel: AuthViewModel) {
     val navController = rememberNavController()
-    val isAuthenticated by authViewModel.isAuthenticated.collectAsState()
 
-//    LaunchedEffect(key1 = isAuthenticated) {
-//        if (isAuthenticated) {
-//            navController.navigate("welcomeScreen") {
-//                popUpTo("loginScreen") { inclusive = true }
-//            }
-//        } else {
-//            navController.navigate("loginScreen") {
-//                popUpTo("welcomeScreen") { inclusive = true }
-//            }
-//        }
-//    }
     NavHost(navController, startDestination = "splashScreen") {
         composable("splashScreen") {
             SplashScreen(navController, authViewModel)
         }
         composable(route = "welcomeScreen") {
-            WelcomeScreen(navController,authViewModel)
+            WelcomeScreen(navController, authViewModel)
         }
         composable(route = "hostScreen") {
             HostScreen(navController)
@@ -71,7 +59,10 @@ fun AppNavigation(authViewModel: AuthViewModel) {
         composable(route = "organizeVotingScreen") {
             OrganizeVotingScreen()
         }
-        composable(route = "startSession/{qrcode}", arguments = listOf(navArgument("qrcode") { type = NavType.StringType })) { backStackEntry ->
+        composable(
+            route = "startSession/{qrcode}",
+            arguments = listOf(navArgument("qrcode") { type = NavType.StringType })
+        ) { backStackEntry ->
             val qrcode = backStackEntry.arguments?.getString("qrcode")
             StartSession(navController, qrcode)
         }

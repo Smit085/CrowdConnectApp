@@ -121,7 +121,7 @@ fun QuestionItem(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "$questionNumber. ${question.text}",
+                    text = "$questionNumber. ${question.question}",
                     style = MaterialTheme.typography.labelMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,

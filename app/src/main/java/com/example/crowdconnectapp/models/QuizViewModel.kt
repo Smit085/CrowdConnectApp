@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
-data class Question(val text: String, val options: List<String>, val correctAnswerIndex: Int)
+data class Question(val question: String, val options: List<String>, val correctAnswerIndex: Int)
 
 class QuizViewModel @Inject constructor() : ViewModel() {
     private val _questions = MutableStateFlow<List<Question>>(emptyList())
@@ -43,6 +43,20 @@ class QuizViewModel @Inject constructor() : ViewModel() {
     var isDurationEnabled by mutableStateOf(false)
 
     private val firestore = FirebaseFirestore.getInstance()
+
+
+    fun addQuestion(question: Question) {
+    _questions.value = _questions.value.plus(question)
+    }
+
+    fun deleteQuestion(question: Question) {
+        _questions.value = _questions.value.filterNot { it == question }
+    }
+
+    fun clearQuestions() {
+        _questions.value = emptyList()
+    }
+
     fun fetchSessionData(qrCode: String) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -51,7 +65,7 @@ class QuizViewModel @Inject constructor() : ViewModel() {
                 if (document.exists()) {
                     title = document.getString("title") ?: ""
                     description = document.getString("description") ?: ""
-                    sessioncode = document.getString("sessioncode") ?: ""
+                    sessioncode = qrCode
                     selectedDate = document.getString("selectedDate") ?: ""
                     selectedTime = document.getString("selectedTime") ?: ""
                     duration = document.getLong("duration")?.toInt() ?: 0
@@ -77,7 +91,7 @@ class QuizViewModel @Inject constructor() : ViewModel() {
                         Log.d("QuizViewModel", "Question fetched: text=$text, options=$options, correctAnswerIndex=$correctAnswerIndex")
 
                         Question(
-                            text = text,
+                            question = text,
                             options = options,
                             correctAnswerIndex = correctAnswerIndex
                         )
@@ -93,18 +107,5 @@ class QuizViewModel @Inject constructor() : ViewModel() {
                 _isLoading.value = false
             }
         }
-    }
-
-
-    fun addQuestion(question: Question) {
-    _questions.value = _questions.value.plus(question)
-    }
-
-    fun deleteQuestion(question: Question) {
-        _questions.value = _questions.value.filterNot { it == question }
-    }
-
-    fun clearQuestions() {
-        _questions.value = emptyList()
     }
 }

@@ -1,13 +1,16 @@
 package com.example.crowdconnectapp.screens.attendee
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.HomeWork
+import androidx.compose.material.icons.filled.RunningWithErrors
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalAbsoluteTonalElevation
@@ -29,7 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.crowdconnectapp.screens.host.BottomNavigationItem
-import com.example.crowdconnectapp.screens.host.RecentsSessions
+import com.google.firebase.auth.FirebaseAuth
 
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -111,10 +114,23 @@ fun AttendeeScreen(navController: NavHostController) {
                 )
             },
             content = {
+                val currentUser = FirebaseAuth.getInstance().currentUser
+                val attendeeId = currentUser?.phoneNumber ?: ""
                 when(selectedItemIndex) {
                     0 -> { AttendeeDashboard(navController) }
-                    1 -> { RecentsSessions(navController) }
-                    2 ->  { Text(text = "Settings Screen") }
+                    1 -> { RecentsSessions(attendeeId) }
+                    2 ->  { Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Absolute.SpaceEvenly,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.RunningWithErrors,
+                            contentDescription = null,
+                            modifier = Modifier.size(50.dp),
+                        )
+                        Text(text = "Feature Under Development")
+                    } }
                 }
             }
         )

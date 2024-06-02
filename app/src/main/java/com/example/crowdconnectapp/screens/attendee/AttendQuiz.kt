@@ -1,6 +1,8 @@
 package com.example.crowdconnectapp.screens.attendee
 
 import android.annotation.SuppressLint
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,13 +18,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.crowdconnectapp.data.submitResponses
 import com.example.crowdconnectapp.models.QuizViewModel
+import com.example.crowdconnectapp.models.UserResponse
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 
 @ExperimentalComposeUiApi
@@ -36,6 +42,7 @@ fun AttendQuiz(navController: NavController) {
     val duration = quizViewModel.duration
     val durationIn = quizViewModel.durationIn
     val isDurationEnabled = quizViewModel.isDurationEnabled
+    val context = LocalContext.current
 
     val totalTime = when (durationIn) {
         "sec" -> duration * 1L
@@ -46,17 +53,36 @@ fun AttendQuiz(navController: NavController) {
 
     var remainingTime by remember { mutableStateOf(totalTime) }
     var timeProgress by remember { mutableStateOf(0f) }
-    var selectedOption by remember { mutableStateOf("") }
     var currentQuestionIndex by remember { mutableStateOf(0) }
-    var answeredQuestions by remember { mutableStateOf(setOf<Int>()) }
+    var selectedOption by remember { mutableStateOf("") }
+    var userResponses by remember { mutableStateOf(mutableListOf<UserResponse>()) }
 
-    // Function to handle moving to the next question
+    fun saveAnswer() {
+        val question = questions.getOrNull(currentQuestionIndex) ?: return
+        val response = UserResponse(currentQuestionIndex, question.options.indexOf(selectedOption))
+        userResponses.removeAll { it.questionIndex == currentQuestionIndex }
+        userResponses.add(response)
+    }
+
     fun nextQuestion() {
+        saveAnswer()
         if (currentQuestionIndex < questions.size - 1) {
             currentQuestionIndex += 1
-            selectedOption = ""
             timeProgress = 0f
             remainingTime = totalTime
+            val nextResponse = userResponses.find { it.questionIndex == currentQuestionIndex }
+            selectedOption = nextResponse?.let { questions[currentQuestionIndex].options[it.selectedOptionIndex] } ?: ""
+        }
+    }
+
+    fun previousQuestion() {
+        saveAnswer()
+        if (currentQuestionIndex > 0) {
+            currentQuestionIndex -= 1
+            timeProgress = 0f
+            remainingTime = totalTime
+            val prevResponse = userResponses.find { it.questionIndex == currentQuestionIndex }
+            selectedOption = prevResponse?.let { questions[currentQuestionIndex].options.getOrNull(it.selectedOptionIndex) } ?: ""
         }
     }
 
@@ -76,7 +102,6 @@ fun AttendQuiz(navController: NavController) {
     }
 
     val currentQuestion = questions.getOrNull(currentQuestionIndex)
-    val allQuestionsAnswered = answeredQuestions.size == questions.size
 
     Scaffold(
         topBar = {
@@ -87,12 +112,9 @@ fun AttendQuiz(navController: NavController) {
                     titleContentColor = MaterialTheme.colorScheme.primary,
                 ),
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigate("startQuiz") }) {
+                    IconButton(onClick = { navController.navigate("attendeeScreen") }) {
                         Icon(imageVector = Icons.Default.Close, contentDescription = "close")
                     }
-                },
-                actions = {
-                    // If needed, add additional actions here
                 }
             )
         }
@@ -119,20 +141,18 @@ fun AttendQuiz(navController: NavController) {
                     if (isDurationEnabled) {
                         Card(
                             shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier
-                                .padding(horizontal = 20.dp)
+                            modifier = Modifier.padding(horizontal = 20.dp)
                         ) {
                             LinearProgressIndicator(
                                 progress = timeProgress,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(7.dp),
-                                color = Color(0xFF019B00),
+                                color = Color(0xFF019B00)
                             )
                         }
                         Spacer(modifier = Modifier.height(8.dp))
-                    }
-                    else{
+                    } else {
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                     Row(
@@ -149,8 +169,8 @@ fun AttendQuiz(navController: NavController) {
                         )
                         Row {
                             IconButton(
-                                onClick = { if (currentQuestionIndex > 0) currentQuestionIndex -= 1 },
-                                enabled = !isDurationEnabled || (isDurationEnabled && selectedOption.isNotEmpty() && !answeredQuestions.contains(currentQuestionIndex))
+                                onClick = { previousQuestion() },
+                                enabled = currentQuestionIndex > 0
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.KeyboardArrowLeft,
@@ -158,8 +178,8 @@ fun AttendQuiz(navController: NavController) {
                                 )
                             }
                             IconButton(
-                                onClick = { if (!isDurationEnabled || selectedOption.isNotEmpty()) nextQuestion() },
-                                enabled = !isDurationEnabled || selectedOption.isNotEmpty()
+                                onClick = { nextQuestion() },
+                                enabled = currentQuestionIndex < questions.size - 1
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.KeyboardArrowRight,
@@ -175,7 +195,7 @@ fun AttendQuiz(navController: NavController) {
                         modifier = Modifier
                             .padding(horizontal = 21.dp)
                             .fillMaxWidth(),
-                        text = question.text,
+                        text = question.question,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Justify
@@ -191,10 +211,7 @@ fun AttendQuiz(navController: NavController) {
                                     .fillMaxWidth()
                                     .padding(vertical = 5.dp)
                                     .clickable {
-                                        if (!answeredQuestions.contains(currentQuestionIndex)) {
-                                            selectedOption = option
-                                            answeredQuestions = answeredQuestions + currentQuestionIndex
-                                        }
+                                        selectedOption = option
                                     }
                                     .border(
                                         width = 1.dp,
@@ -240,12 +257,33 @@ fun AttendQuiz(navController: NavController) {
                             modifier = Modifier.width(350.dp),
                             onClick = {
                                 if (currentQuestionIndex == questions.size - 1) {
-                                    // Submit action here
+                                    saveAnswer()
+                                    if (userResponses.size == questions.size) {
+                                        val currentUser = FirebaseAuth.getInstance().currentUser
+                                        val attendeeId = currentUser?.phoneNumber ?: ""
+                                        submitResponses(
+                                            attendeeId = attendeeId,
+                                            name = "Smit",
+                                            responses = userResponses,
+                                            mobno = attendeeId,
+                                            sessionId = quizViewModel.sessioncode,
+                                            onSuccess = {
+                                                Toast.makeText(context, "Your response has been submitted.", Toast.LENGTH_SHORT).show()
+                                                navController.navigate("attendeeScreen")
+                                            },
+                                            onFailure = { exception ->
+                                                Log.e("SubmitError", "Error submitting responses", exception)
+                                            }
+                                        )
+                                    } else {
+                                        Toast.makeText(context, "Please answer all questions before submitting.", Toast.LENGTH_SHORT).show()
+                                    }
+
                                 } else {
                                     nextQuestion()
                                 }
                             },
-                            enabled = !isDurationEnabled || selectedOption.isNotEmpty()
+                            enabled = selectedOption.isNotBlank()
                         ) {
                             Text(
                                 text = if (currentQuestionIndex == questions.size - 1) "Submit" else "Continue",
@@ -253,6 +291,7 @@ fun AttendQuiz(navController: NavController) {
                             )
                         }
                     }
+
                 }
             }
         }
@@ -274,9 +313,7 @@ fun OptionIndicator(indicator: String, isSelected: Boolean) {
         Text(
             text = indicator,
             color = Color.White,
-            fontWeight = FontWeight.Bold,
-            fontSize = 14.sp,
-            textAlign = TextAlign.Center
+            fontWeight = FontWeight.Bold
         )
     }
 }

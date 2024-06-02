@@ -1,6 +1,10 @@
 package com.example.crowdconnectapp.screens.host
 
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,6 +23,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -34,19 +40,31 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.Green
 import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.crowdconnectapp.ui.theme.Blue
+import com.example.crowdconnectapp.ui.theme.Grey
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecentsSessions(navController: NavHostController) {
+fun RecentsSessions() {
     Scaffold(topBar = {
         TopAppBar(
             title = { Text("Sessions") },
@@ -56,52 +74,74 @@ fun RecentsSessions(navController: NavHostController) {
             ),
         )
     }) {
-//        Column(modifier = Modifier.padding(it)) {
-//            Text(
-//                modifier = Modifier.padding(16.dp),
-//                text = "Recents Sesssions",
-//                style = MaterialTheme.typography.titleMedium,
-//                color = MaterialTheme.colorScheme.onSurface
-//            )
-//        }
+        var sessions by remember { mutableStateOf<List<PastSessions>?>(null) } // Nullable sessions
+        var isLoading by remember { mutableStateOf(true) } // Loading state
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        val hostId = currentUser?.phoneNumber ?: ""
 
-        var sessions by remember { mutableStateOf<List<PastSessions>>(emptyList()) }
-//
         LaunchedEffect(Unit) {
-            fetchSessions { fetchedSessions ->
+            fetchSessions(hostId) { fetchedSessions ->
                 sessions = fetchedSessions
+                isLoading = false
             }
         }
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(it)
-        ) {
-            Text(
-                modifier = Modifier.padding(16.dp),
-                text = "Recents Sesssions",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
+        if (isLoading) { // Show loading indicator if data is still loading
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+                    .wrapContentSize(Alignment.Center)
             )
-
-            LazyColumn {
-                items(sessions) { session ->
-                    SessionCard(session = session, onDeleteConfirmed = {
-                        deleteSession(session.id,
-                            onSuccess = {
-                                sessions = sessions.filterNot { it.id == session.id }
-                            },
-                            onError = { e ->
-                                //Handle ERROr
-                            }
+        } else {
+            if (sessions.isNullOrEmpty()) { // Check if the session list is empty or null
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "No sessions created Yet!",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            } else {
+                // Display sessions
+                sessions?.let { sessionList ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(it)
+                    ) {
+                        Text(
+                            modifier = Modifier.padding(16.dp),
+                            text = "Recent Sessions",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
-                    })
+
+                        LazyColumn(
+                            contentPadding = PaddingValues(bottom = 70.dp)
+                        ) {
+                            items(sessionList) { session ->
+                                SessionCard(session = session, onDeleteConfirmed = {
+                                    deleteSession(session.id, onSuccess = {
+                                        sessions = sessions?.filterNot { it.id == session.id }
+                                    }, onError = { e ->
+                                        // Handle error
+                                    })
+                                })
+                            }
+                        }
+                    }
                 }
             }
         }
+
     }
 }
+
 
 data class PastSessions(
     val id: String,
@@ -109,15 +149,18 @@ data class PastSessions(
     val duration: Int,
     val durationIn: String,
     val selectedDate: String,
-    val selectedTime: String
+    val selectedTime: String,
+    val timeout: Int,
+    val timeoutIn: String,
 )
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SessionCard(
-    session: PastSessions,
-    onDeleteConfirmed: () -> Unit // Add onDeleteConfirmed lambda parameter
+    session: PastSessions, onDeleteConfirmed: () -> Unit // Add onDeleteConfirmed lambda parameter
 ) {
     var showDialog by remember { mutableStateOf(false) }
+
     Card(
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(
@@ -140,44 +183,75 @@ fun SessionCard(
                     modifier = Modifier.size(40.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
+
                 Text(
-                    text = session.title, style = MaterialTheme.typography.headlineMedium
+                    text = session.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    overflow = TextOverflow.Ellipsis,
                 )
-                // Label indicating session is live or ended
+
                 Spacer(modifier = Modifier.weight(1f))
+                val sessionStatusText = if (isSessionLive(session)) {
+                    "• Live"
+                } else {
+                    "• Completed"
+                }
                 Card(
-                    shape = RoundedCornerShape(2.dp), colors = CardDefaults.cardColors(
-                        containerColor = Red,
-                    ), elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
+                    shape = RoundedCornerShape(2.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (sessionStatusText == "• Live") Red else Grey,
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
                 ) {
                     Text(
-                        text = "• Live", style = MaterialTheme.typography.titleSmall.copy(
+                        text = sessionStatusText, style = MaterialTheme.typography.titleSmall.copy(
                             color = White, fontSize = 10.sp
-                        ), modifier = Modifier.padding(4.dp)
+                        ), modifier = Modifier.padding(horizontal = 4.dp)
                     )
                 }
             }
-            Row {
+            Row(
+                verticalAlignment = Alignment.Bottom
+            ) {
                 Column {
-                    Text(
-                        text = "Duration: ${session.duration} ${session.durationIn}",
-                        style = MaterialTheme.typography.labelLarge,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    // Date and Time
                     Row {
                         Text(
-                            text = "Date: ${session.selectedDate}",
-                            style = MaterialTheme.typography.labelMedium,
-                                    maxLines = 1,
+                            text = "Duration: ",
+                            style = MaterialTheme.typography.labelLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = "${session.duration} ${session.durationIn}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    Row {
+                        Text(
+                            text = "Date: ",
+                            style = MaterialTheme.typography.labelLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = session.selectedDate,
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Time: ${session.selectedTime}",
-                            style = MaterialTheme.typography.labelMedium,
-                                    maxLines = 1,
+                            text = "Time: ",
+                            style = MaterialTheme.typography.labelLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = session.selectedTime,
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
@@ -190,33 +264,54 @@ fun SessionCard(
                         Icons.Default.Delete,
                         contentDescription = "Delete",
                         tint = Red,
-                        modifier = Modifier
-                            .size(25.dp)
+                        modifier = Modifier.size(25.dp)
                     )
                 }
             }
         }
     }
     if (showDialog) {
-        DeleteConfirmationDialog(
-            onDeleteConfirmed = {
-                onDeleteConfirmed()
-                showDialog = false
-            },
-            onDismiss = { showDialog = false }
-        )
+        DeleteConfirmationDialog(onDeleteConfirmed = {
+            onDeleteConfirmed()
+            showDialog = false
+        }, onDismiss = { showDialog = false })
     }
 }
 
+fun isSessionLive(session: PastSessions): Boolean {
+
+    val selectedDate = session.selectedDate
+    val selectedTime = session.selectedTime
+    val timeoutIn = session.timeoutIn
+    val timeout = if (timeoutIn == "min") session.timeout else session.timeout * 60
+    if (selectedDate.isNotEmpty() && selectedTime.isNotEmpty()) {
+        val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+        val currentDate = Date()
+        try {
+            val sessionStartDate = dateFormat.parse("$selectedDate $selectedTime")
+
+            val calendar = Calendar.getInstance().apply {
+                time = sessionStartDate!!
+                add(Calendar.MINUTE, timeout)
+            }
+            val sessionEndDate = calendar.time
+
+            return currentDate.after(sessionStartDate) && currentDate.before(sessionEndDate)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    } else {
+    }
+    return false
+}
+
+
+
 @Composable
 fun DeleteConfirmationDialog(
-    onDeleteConfirmed: () -> Unit,
-    onDismiss: () -> Unit
+    onDeleteConfirmed: () -> Unit, onDismiss: () -> Unit
 ) {
-    // Implement your dialog UI here, such as AlertDialog or custom dialog
-    // Example using AlertDialog
-    AlertDialog(
-        onDismissRequest = onDismiss,
+    AlertDialog(onDismissRequest = onDismiss,
         title = { Text("Confirm Deletion") },
         text = { Text("Are you sure you want to delete this session?") },
         confirmButton = {
@@ -232,32 +327,33 @@ fun DeleteConfirmationDialog(
             ) {
                 Text("Cancel")
             }
-        }
-    )
+        })
 }
 
 private fun deleteSession(sessionId: String, onSuccess: () -> Unit, onError: (Exception) -> Unit) {
     val firestore = FirebaseFirestore.getInstance()
 
     try {
-        firestore.collection("Sessions").document(sessionId).delete()
-            .addOnSuccessListener {
-                onSuccess()
-            }
-            .addOnFailureListener { e ->
-                onError(e)
-            }
+        firestore.collection("Sessions").document(sessionId).delete().addOnSuccessListener {
+            onSuccess()
+        }.addOnFailureListener { e ->
+            onError(e)
+        }
     } catch (e: Exception) {
         onError(e)
     }
 }
 
 
-private suspend fun fetchSessions(onSuccess: (List<PastSessions>) -> Unit) {
+private suspend fun fetchSessions(hostId: String, onSuccess: (List<PastSessions>) -> Unit) {
     val firestore = FirebaseFirestore.getInstance()
     val sessionList = mutableListOf<PastSessions>()
     try {
-        val querySnapshot = firestore.collection("Sessions").get().await()
+        val querySnapshot = firestore.collection("Sessions")
+            .whereEqualTo("hostId", hostId)
+            .get()
+            .await()
+
         for (document in querySnapshot.documents) {
             val id = document.id
             val title = document.getString("title") ?: ""
@@ -265,6 +361,8 @@ private suspend fun fetchSessions(onSuccess: (List<PastSessions>) -> Unit) {
             val durationIn = document.getString("durationIn") ?: ""
             val selectedDate = document.getString("selectedDate") ?: ""
             val selectedTime = document.getString("selectedTime") ?: ""
+            val timeout = document.getLong("timeout") ?: 10
+            val timeoutIn = document.getString("timeoutIn") ?: "min"
             sessionList.add(
                 PastSessions(
                     id,
@@ -273,6 +371,8 @@ private suspend fun fetchSessions(onSuccess: (List<PastSessions>) -> Unit) {
                     durationIn,
                     selectedDate,
                     selectedTime,
+                    timeout.toInt(),
+                    timeoutIn
                 )
             )
         }

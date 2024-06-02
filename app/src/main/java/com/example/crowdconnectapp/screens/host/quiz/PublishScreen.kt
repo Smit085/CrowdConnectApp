@@ -1,16 +1,13 @@
 package com.example.crowdconnectapp.screens.host.quiz
 
 import android.content.Intent
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -21,28 +18,34 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.annotation.RequiresApi
+import androidx.navigation.NavHostController
 import com.example.crowdconnectapp.components.qrcode.FlipCard
+import com.example.crowdconnectapp.data.addSession
 import com.example.crowdconnectapp.data.addToDB
 import com.example.crowdconnectapp.models.QuizViewModel
-import java.security.SecureRandom
+import com.google.firebase.auth.FirebaseAuth
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import android.widget.Toast
-import androidx.annotation.RequiresApi
-import androidx.navigation.NavHostController
+import java.security.SecureRandom
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun PublishScreen(navController: NavHostController, quizViewModel: QuizViewModel) {
     val context = LocalContext.current
+    val currentUser = FirebaseAuth.getInstance().currentUser
+    val hostId = currentUser?.phoneNumber ?: ""
+    var isLoading by remember { mutableStateOf(false) } // Loading state
+
     if (quizViewModel.sessioncode == "") {
         quizViewModel.sessioncode = generateCode("QZ")
     }
 
-    Column(Modifier.fillMaxSize()) {
+    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
         FlipCard()
         Row(
             modifier = Modifier
@@ -68,11 +71,12 @@ fun PublishScreen(navController: NavHostController, quizViewModel: QuizViewModel
                 )
             }
             IconButton(
-                onClick = { val clipboardManager =
-                    context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                onClick = {
+                    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                     val clip = ClipData.newPlainText("password", quizViewModel.sessioncode)
-                    clipboardManager.setPrimaryClip(clip) },
-                ) {
+                    clipboardManager.setPrimaryClip(clip)
+                }
+            ) {
                 Icon(
                     Icons.Default.ContentCopy,
                     contentDescription = "Copy",
@@ -82,16 +86,36 @@ fun PublishScreen(navController: NavHostController, quizViewModel: QuizViewModel
                 )
             }
         }
-        Button(
-            onClick = {
-                addToDB(quizViewModel,"Sessions",quizViewModel.sessioncode)
-                navController.navigate("hostScreen")
-                Toast.makeText(context, "Session Created", Toast.LENGTH_SHORT).show()
-            },
-            shape = RoundedCornerShape(5.dp),
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        ) {
-            Text(text = "Publish", style = MaterialTheme.typography.titleLarge)
+
+        if (isLoading) {
+            CircularProgressIndicator(modifier = Modifier.size(35.dp))
+        } else {
+            Button(
+                onClick = {
+                    isLoading = true
+                    addSession(
+                        hostId = hostId,
+                        name = "Smit",
+                        mobno = hostId,
+                        sessionId = quizViewModel.sessioncode,
+                        onSuccess = {
+                            addToDB(quizViewModel, "Sessions", quizViewModel.sessioncode)
+                            Toast.makeText(context, "Your Session has been Created.", Toast.LENGTH_SHORT).show()
+                            isLoading = false
+                            navController.navigate("hostScreen")
+                        },
+                        onFailure = { exception ->
+                            Log.e("SessionCreationError", "Error Creating Session", exception)
+                            Toast.makeText(context, "Failed to create session.", Toast.LENGTH_SHORT).show()
+                            isLoading = false
+                        }
+                    )
+                },
+                shape = RoundedCornerShape(5.dp),
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
+                Text(text = "Publish", style = MaterialTheme.typography.titleLarge)
+            }
         }
     }
 }
@@ -101,5 +125,3 @@ fun generateCode(prefix: String): String {
     val random = SecureRandom()
     return prefix + (1..8).map { random.nextInt(charPool.size) }.map(charPool::get).joinToString("")
 }
-
-

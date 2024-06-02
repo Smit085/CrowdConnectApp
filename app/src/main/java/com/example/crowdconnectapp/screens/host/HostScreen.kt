@@ -1,13 +1,18 @@
 package com.example.crowdconnectapp.screens.host
 
 import android.annotation.SuppressLint
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.HomeWork
+import androidx.compose.material.icons.filled.RunningWithErrors
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalAbsoluteTonalElevation
@@ -38,6 +43,7 @@ data class BottomNavigationItem(
     val route:String
 )
 
+@RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HostScreen(navController: NavHostController) {
@@ -118,8 +124,19 @@ fun HostScreen(navController: NavHostController) {
             content = {
                 when(selectedItemIndex) {
                     0 -> { HostDashboard(navController) }
-                    1 -> { RecentsSessions(navController) }
-                    2 ->  { Text(text = "Settings Screen") }
+                    1 -> { RecentsSessions() }
+                    2 ->  { Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Absolute.SpaceEvenly,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.RunningWithErrors,
+                            contentDescription = null,
+                            modifier = Modifier.size(50.dp),
+                        )
+                        Text(text = "Feature Under Development")
+                    } }
                 }
             }
         )
