@@ -6,9 +6,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.navigation.NavHostController
 import com.example.crowdconnectapp.models.AuthViewModel
-import kotlinx.coroutines.Delay
-import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(navController: NavHostController, authViewModel: AuthViewModel) {
@@ -28,7 +25,6 @@ fun SplashScreen(navController: NavHostController, authViewModel: AuthViewModel)
             }
         }
     }
-
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center

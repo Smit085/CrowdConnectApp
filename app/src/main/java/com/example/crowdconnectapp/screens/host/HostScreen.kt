@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.crowdconnectapp.models.AuthViewModel
 
 data class BottomNavigationItem(
     val title: String,
@@ -46,7 +47,7 @@ data class BottomNavigationItem(
 @RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun HostScreen(navController: NavHostController) {
+fun HostScreen(navController: NavHostController, authViewModel: AuthViewModel) {
     var selectedItemIndex by rememberSaveable {
         mutableIntStateOf(0)
     }
@@ -123,8 +124,8 @@ fun HostScreen(navController: NavHostController) {
             },
             content = {
                 when(selectedItemIndex) {
-                    0 -> { HostDashboard(navController) }
-                    1 -> { RecentsSessions() }
+                    0 -> { HostDashboard(authViewModel,navController) }
+                    1 -> { RecentsSessions(authViewModel,navController,) }
                     2 ->  { Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Absolute.SpaceEvenly,

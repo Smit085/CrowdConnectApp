@@ -41,11 +41,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.crowdconnectapp.models.AuthViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthProvider
 
 @Composable
-fun OtpVerificationScreen(navController: NavHostController, verificationId: String?) {
+fun OtpVerificationScreen(navController: NavHostController, verificationId: String?, authViewModel: AuthViewModel) {
     val context = LocalContext.current
     var otpValue by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
@@ -110,10 +111,20 @@ fun OtpVerificationScreen(navController: NavHostController, verificationId: Stri
                 hideKeyboard(context)
                 verifyOtp(navController, verificationId, otpValue) { success ->
                     isLoading = false
+                    Log.d("OTPVerification", "Verification result: $success")
                     if (success) {
-                        navController.navigate("welcomeScreen")
+                        authViewModel.checkIfNewUser { isNewUser ->
+                            if (isNewUser) {
+                                navController.navigate("userOnboardingScreen") {
+                                    popUpTo("otpVerificationScreen") { inclusive = true }
+                                }
+                            } else {
+                                navController.navigate("welcomeScreen") {
+                                    popUpTo("otpVerificationScreen") { inclusive = true }
+                                }
+                            }
+                        }
                     } else {
-                        // Handle verification failure
                         Toast.makeText(context, "Failed to verify OTP. Please try again.", Toast.LENGTH_SHORT).show()
                     }
                 }
@@ -135,9 +146,9 @@ fun OtpVerificationScreen(navController: NavHostController, verificationId: Stri
     }
 }
 
+
 fun verifyOtp(navController: NavHostController, verificationId: String?, otp: String, onVerificationResult: (Boolean) -> Unit) {
     if (verificationId.isNullOrBlank()) {
-        Log.d("Error", "Verification ID is null or blank")
         onVerificationResult(false)
         return
     }
@@ -146,10 +157,8 @@ fun verifyOtp(navController: NavHostController, verificationId: String?, otp: St
     FirebaseAuth.getInstance().signInWithCredential(credential)
         .addOnCompleteListener { task ->
             if (task.isSuccessful) {
-                Log.d("NAV", "isSuccessful")
                 onVerificationResult(true)
             } else {
-                Log.d("NAV", "UnSuccessful")
                 onVerificationResult(false)
             }
         }

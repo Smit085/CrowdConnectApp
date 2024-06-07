@@ -3,7 +3,6 @@ package com.example.crowdconnectapp.data
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.compose.runtime.Composable
 import androidx.lifecycle.ViewModel
 import com.example.crowdconnectapp.models.Question
 import com.example.crowdconnectapp.models.QuizViewModel
@@ -24,8 +23,7 @@ import java.util.Locale
 fun addToDB(viewModel: ViewModel, collection: String, sessionId: String) {
     val firestore = FirebaseFirestore.getInstance()
     val currentUser = FirebaseAuth.getInstance().currentUser
-    val hostId = currentUser?.phoneNumber ?: ""
-
+    var hostId = currentUser?.phoneNumber ?: ""
     val dataMap = when (viewModel) {
         is QuizViewModel -> {
             val questionsMap = viewModel.questions.value.let { convertQuestionsToMap(it) }
@@ -83,15 +81,15 @@ fun convertQuestionsToMap(questions: List<Question>): List<Map<String, Any>> {
     }
 }
 fun submitResponses(
-    attendeeId: String,
-    name: String,
-    mobno: String,
     sessionId: String,
     responses: MutableList<UserResponse>,
     onSuccess: () -> Unit,
     onFailure: (Exception) -> Unit
 ) {
+
     val firestore = FirebaseFirestore.getInstance()
+    val currentUser = FirebaseAuth.getInstance().currentUser
+    val attendeeId = currentUser?.phoneNumber ?: ""
 
     // Current date and time
     val currentDateTime = Calendar.getInstance().time
@@ -110,8 +108,8 @@ fun submitResponses(
     val sessionData = mapOf(
         "sessionId" to sessionId,
         "responses" to responsesMap,
-        "date" to formattedDate, // Store date of session response
-        "time" to formattedTime  // Store time of session response
+        "date" to formattedDate,
+        "time" to formattedTime
     )
 
     val attendeeDocRef = firestore.collection("Attendee").document(attendeeId)
@@ -122,13 +120,10 @@ fun submitResponses(
         if (!attendeeSnapshot.exists()) {
             // Create new attendee document if it doesn't exist
             val newAttendee = mapOf(
-                "name" to name,
-                "mobno" to mobno,
                 "attendedSessionlist" to listOf(sessionData)
             )
             transaction.set(attendeeDocRef, newAttendee)
         } else {
-            // Update existing attendee document
             val existingSessions = attendeeSnapshot.get("attendedSessionlist") as? List<Map<String, Any>> ?: listOf()
             val updatedSessions = existingSessions.toMutableList().apply {
                 add(sessionData)
@@ -161,6 +156,7 @@ suspend fun fetchAttendedSessions(attendeeId: String): List<AtendeeSession> {
                 AtendeeSession(
                     sessionId = sessionId,
                     title = "", // Initially empty, fetched later
+                    isEvaluateEnabled = false,
                     responses = responses,
                     date = sessionData["date"] as? String ?: "",
                     time = sessionData["time"] as? String ?: ""
@@ -174,13 +170,14 @@ suspend fun fetchAttendedSessions(attendeeId: String): List<AtendeeSession> {
 
 
 
-suspend fun fetchSessionData(sessionId: String): Pair<String, List<Question>> {
+suspend fun fetchSessionData(sessionId: String): Triple<String, List<Question>, Boolean> {
     val firestore = FirebaseFirestore.getInstance()
     val sessionDocRef = firestore.collection("Sessions").document(sessionId)
 
     return sessionDocRef.get().await().let { documentSnapshot ->
         if (documentSnapshot.exists()) {
             val title = documentSnapshot.getString("title") ?: "Untitled"
+            val isEvaluateEnabled = documentSnapshot.getBoolean("isEvaluateEnabled") ?: false
             val questions =
                 documentSnapshot.get("questions") as? List<Map<String, Any>> ?: emptyList()
             val questionsList = questions.mapNotNull { questionData ->
@@ -199,14 +196,13 @@ suspend fun fetchSessionData(sessionId: String): Pair<String, List<Question>> {
                     null
                 }
             }
-            title to questionsList
+            Triple(title, questionsList, isEvaluateEnabled)
         } else {
-            "Untitled" to emptyList()
+            Triple("Untitled", emptyList(), false)
         }
     }
 }
 
-//For Host
 fun addSession(
     hostId: String,
     name: String,
@@ -248,3 +244,5 @@ fun addSession(
         onFailure(exception)
     }
 }
+
+

@@ -31,6 +31,7 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import android.widget.Toast
+import com.example.crowdconnectapp.models.Question
 import java.security.SecureRandom
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -72,7 +73,8 @@ fun PublishScreen(navController: NavHostController, quizViewModel: QuizViewModel
             }
             IconButton(
                 onClick = {
-                    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    val clipboardManager =
+                        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                     val clip = ClipData.newPlainText("password", quizViewModel.sessioncode)
                     clipboardManager.setPrimaryClip(clip)
                 }
@@ -92,24 +94,57 @@ fun PublishScreen(navController: NavHostController, quizViewModel: QuizViewModel
         } else {
             Button(
                 onClick = {
-                    isLoading = true
-                    addSession(
-                        hostId = hostId,
-                        name = "Smit",
-                        mobno = hostId,
-                        sessionId = quizViewModel.sessioncode,
-                        onSuccess = {
-                            addToDB(quizViewModel, "Sessions", quizViewModel.sessioncode)
-                            Toast.makeText(context, "Your Session has been Created.", Toast.LENGTH_SHORT).show()
-                            isLoading = false
-                            navController.navigate("hostScreen")
-                        },
-                        onFailure = { exception ->
-                            Log.e("SessionCreationError", "Error Creating Session", exception)
-                            Toast.makeText(context, "Failed to create session.", Toast.LENGTH_SHORT).show()
-                            isLoading = false
+                    when {
+                        quizViewModel.title.isEmpty() -> {
+                            Toast.makeText(
+                                context,
+                                "You haven't added session title yet!",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
-                    )
+                        quizViewModel.description.isEmpty() -> {
+                            Toast.makeText(
+                                context,
+                                "You haven't added session description yet!",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                        quizViewModel.questions == emptyList<Question>() -> {  // Properly checking if the list is empty
+                            Toast.makeText(
+                                context,
+                                "You haven't added question yet!",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                        else -> {
+                            isLoading = true
+                            addSession(
+                                hostId = hostId,
+                                name = "Smit",
+                                mobno = hostId,
+                                sessionId = quizViewModel.sessioncode,
+                                onSuccess = {
+                                    addToDB(quizViewModel, "Sessions", quizViewModel.sessioncode)
+                                    Toast.makeText(
+                                        context,
+                                        "Your Session has been Created.",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    isLoading = false
+                                    navController.navigate("hostScreen")
+                                },
+                                onFailure = { exception ->
+                                    Log.e("SessionCreationError", "Error Creating Session", exception)
+                                    Toast.makeText(
+                                        context,
+                                        "Failed to create session.",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    isLoading = false
+                                }
+                            )
+                        }
+                    }
                 },
                 shape = RoundedCornerShape(5.dp),
                 modifier = Modifier.align(Alignment.CenterHorizontally)

@@ -1,24 +1,34 @@
 package com.example.crowdconnectapp.screens.attendee
 
-import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import com.example.crowdconnectapp.data.fetchAttendedSessions
 import com.example.crowdconnectapp.data.fetchSessionData
+import com.example.crowdconnectapp.models.AuthViewModel
 import com.example.crowdconnectapp.models.Question
+import com.example.crowdconnectapp.models.getAvatarResource
 
 data class AtendeeSession(
     val sessionId: String,
@@ -26,17 +36,19 @@ data class AtendeeSession(
     var title: String,
     val date: String,
     val time: String,
+    val isEvaluateEnabled: Boolean,
     var score: Int = 0
 )
 
 data class Response(
-    val questionIndex: Int,
-    val selectedAnswerIndex: Int
+    val questionIndex: Int = -1,
+    val selectedAnswerIndex: Int = -1
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecentsSessions(attendeeId: String) {
+fun RecentsSessions(attendeeId: String, authViewModel: AuthViewModel, navController: NavHostController) {
+    val userAvatar by authViewModel.userAvatar.collectAsState()
     Scaffold(topBar = {
         TopAppBar(
             title = { Text("Sessions") },
@@ -44,6 +56,32 @@ fun RecentsSessions(attendeeId: String) {
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 titleContentColor = MaterialTheme.colorScheme.primary,
             ),
+            navigationIcon = {
+                IconButton(
+                    onClick = {
+                        navController.popBackStack()
+                        navController.navigate("attendeeScreen")
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back"
+                    )
+                }
+            },
+            actions = {
+                Image(
+                    painter = painterResource(id = getAvatarResource(userAvatar)),
+                    contentDescription = "User Avatar",
+                    modifier = Modifier
+                        .size(45.dp)
+                        .clip(CircleShape)
+                        .padding(end = 8.dp)
+                        .clickable {
+                            navController.navigate("updateProfileScreen")
+                        }
+                )
+            }
         )
     }) {
 
@@ -57,9 +95,10 @@ fun RecentsSessions(attendeeId: String) {
                 val updatedSessions = mutableListOf<AtendeeSession>()
 
                 fetchedSessions.forEachIndexed { index, session ->
-                    val (title, questions) = fetchSessionData(session.sessionId)
+                    val (title, questions,isEvaluateEnabled) = fetchSessionData(session.sessionId)
                     val updatedSession = session.copy(
                         title = title,
+                        isEvaluateEnabled = isEvaluateEnabled,
                         score = calculateScore(session.responses, questions)
                     )
                     updatedSessions.add(updatedSession)
@@ -68,7 +107,6 @@ fun RecentsSessions(attendeeId: String) {
                 attendedSessionsList = updatedSessions
                 isLoading = false
             } catch (e: Exception) {
-                Log.e("RecentsSessions", "Error fetching sessions", e)
                 Toast.makeText(context, "Something went wrong!", Toast.LENGTH_SHORT).show()
                 isLoading = false
             }
@@ -121,6 +159,10 @@ fun RecentsSessions(attendeeId: String) {
                 }
             }
         }
+    }
+    BackHandler {
+        navController.popBackStack()
+        navController.navigate("attendeeScreen")
     }
 }
 
@@ -177,8 +219,9 @@ fun SessionCard(session: AtendeeSession) {
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
+                        // Display score or placeholder based on isEvaluateEnabled flag
                         Text(
-                            text = "${session.score}/${session.responses.size}",// can you add total no of questions here
+                            text = if (session.isEvaluateEnabled) "${session.score}/${session.responses.size}" else "-/:",
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     }
@@ -214,3 +257,4 @@ fun SessionCard(session: AtendeeSession) {
         }
     }
 }
+

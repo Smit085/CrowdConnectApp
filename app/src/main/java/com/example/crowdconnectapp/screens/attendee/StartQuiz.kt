@@ -1,5 +1,7 @@
 package com.example.crowdconnectapp.screens.attendee
 
+import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,6 +26,7 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun StartQuiz(navController: NavController, qrcode: String) {
+    Log.i("StartQuiz", "called")
     val quizViewModel: QuizViewModel = hiltViewModel()
     val isLoading by quizViewModel.isLoading.collectAsState()
     val title = quizViewModel.title
@@ -31,18 +34,16 @@ fun StartQuiz(navController: NavController, qrcode: String) {
     val selectedDate = quizViewModel.selectedDate
     val selectedTime = quizViewModel.selectedTime
     val timeoutIn = quizViewModel.timeoutIn
-    val timeout = if (timeoutIn == "min") quizViewModel.timeout else quizViewModel.timeout * 60
+    val timeout = quizViewModel.timeout
 
     var isQuizOver by remember { mutableStateOf(false) }
+    var isQuizStarted by remember { mutableStateOf(false) }
     var isQuizNotStarted by remember { mutableStateOf(false) }
     var isQuizActive by remember { mutableStateOf(false) }
-    var isattempted by remember { mutableStateOf(false) }
 
-    LaunchedEffect(qrcode) {
+    LaunchedEffect(qrcode, selectedDate, selectedTime) {
         quizViewModel.fetchSessionData(qrcode)
-    }
 
-    LaunchedEffect(selectedDate, selectedTime) {
         if (selectedDate.isNotEmpty() && selectedTime.isNotEmpty()) {
             val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
             val currentDate = Date()
@@ -51,150 +52,178 @@ fun StartQuiz(navController: NavController, qrcode: String) {
 
                 val calendar = Calendar.getInstance().apply {
                     time = quizStartDate!!
-                    add(Calendar.MINUTE, timeout)
+                    add(Calendar.MINUTE, if (timeoutIn == "min") timeout else timeout * 60)
                 }
                 val quizEndDate = calendar.time
 
-                // Update states based on current time
                 isQuizOver = currentDate.after(quizEndDate)
                 isQuizNotStarted = currentDate.before(quizStartDate)
                 isQuizActive = !isQuizNotStarted && !isQuizOver
             } catch (e: Exception) {
-                // Handle parsing errors
+                Log.e("StartQuiz", "Error parsing date", e)
             }
-        } else {
-            // Handle missing date or time
         }
     }
 
     if (isLoading) {
         Box(
-            modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
             CircularProgressIndicator()
         }
     } else {
-        Scaffold(topBar = {
-            TopAppBar(title = { Text("Join Quiz") }, navigationIcon = {
-                IconButton(onClick = { navController.navigate("attendeeScreen") }) {
-                    Icon(
-                        imageVector = Icons.Default.Close, contentDescription = "Close"
-                    )
-                }
-            })
-        }, content = { padding ->
-            Surface(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = "Title: $title",
-                            style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold)
-                        )
-                        Column {
-                            Text(
-                                text = "Description: ", style = MaterialTheme.typography.titleSmall
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Join Quiz") },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        titleContentColor = MaterialTheme.colorScheme.primary,
+                    ),
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            navController.popBackStack()
+                            navController.navigate("attendeeScreen")
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close"
                             )
-                            Text(
-                                text = description, style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(
-                                text = "Date: ",
-                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = selectedDate, style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-
-                        Row {
-                            Text(
-                                text = "Time: ",
-                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = selectedTime, style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Button(
-                                onClick = { isattempted = true },
-                                enabled = isQuizActive,
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                            ) {
-                                Text(text = "Start Quiz", color = Color.White)
-                            }
-                            Button(
-                                onClick = { /* TODO: Implement help action */ },
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                            ) {
-                                Text(text = "Need Help?", color = Color.White)
-                            }
                         }
                     }
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isQuizOver || isQuizNotStarted) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer,
-                        ),
-                        shape = RoundedCornerShape(8.dp),
-                        elevation = CardDefaults.cardElevation(
-                            defaultElevation = 56.dp
-                        ),
+                )
+            },
+            content = { padding ->
+                Surface(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Row(
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Title:",
+                                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
+                                )
+                                Text(
+                                    text = " $title",
+                                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Medium)
+                                )
+                            }
+                            Column {
+                                Text(
+                                    text = "Description: ",
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                                Text(
+                                    text = description,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Text(
+                                    text = "Date: ",
+                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = selectedDate,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+
+                            Row {
+                                Text(
+                                    text = "Time: ",
+                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = selectedTime,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Button(
+                                    onClick = { isQuizStarted = true },
+                                    enabled = isQuizActive,
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                                ) {
+                                    Text(text = "Start Quiz", color = Color.White)
+                                }
+                                Button(
+                                    onClick = { /* TODO: Implement help action */ },
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                                ) {
+                                    Text(text = "Need Help?", color = Color.White)
+                                }
+                            }
+                        }
+                        Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(8.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isQuizOver || isQuizNotStarted) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer,
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            elevation = CardDefaults.cardElevation(
+                                defaultElevation = 56.dp
+                            ),
                         ) {
-                            Icon(
-                                imageVector = when {
-                                    isQuizOver -> Icons.Default.Warning
-                                    isQuizNotStarted -> Icons.Default.Schedule
-                                    else -> Icons.Default.CheckCircle
-                                },
-                                contentDescription = null,
-                                tint = if (isQuizOver || isQuizNotStarted) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = when {
-                                    isQuizOver -> "Quiz timings are over."
-                                    isQuizNotStarted -> "Quiz has not started yet."
-                                    else -> "Quiz is live now."
-                                },
-                                color = if (isQuizOver || isQuizNotStarted) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = when {
+                                        isQuizOver -> Icons.Default.Warning
+                                        isQuizNotStarted -> Icons.Default.Schedule
+                                        else -> Icons.Default.CheckCircle
+                                    },
+                                    contentDescription = null,
+                                    tint = if (isQuizOver || isQuizNotStarted) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = when {
+                                        isQuizOver -> "Quiz timings are over."
+                                        isQuizNotStarted -> "Quiz has not started yet."
+                                        else -> "Quiz is live now."
+                                    },
+                                    color = if (isQuizOver || isQuizNotStarted) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }
             }
-        })
+        )
     }
-    if(isattempted){
+    if (isQuizStarted){
         AttendQuiz(navController)
+    }
+    BackHandler {
+        navController.popBackStack()
+        navController.navigate("attendeeScreen")
     }
 }

@@ -1,5 +1,7 @@
 package com.example.crowdconnectapp.screens
 
+import android.app.Activity
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -21,6 +24,13 @@ import com.example.crowdconnectapp.models.AuthViewModel
 fun WelcomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
     var selectedOption by remember { mutableStateOf<Option?>(null) }
     var showDialog by remember { mutableStateOf(false) }
+    var showExitDialog by remember { mutableStateOf(false) }
+
+    val activity = LocalContext.current as? Activity
+
+    BackHandler {
+        showExitDialog = true
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -96,6 +106,18 @@ fun WelcomeScreen(navController: NavHostController, authViewModel: AuthViewModel
                 }
             )
         }
+
+        if (showExitDialog) {
+            ExitConfirmationDialog(
+                onConfirm = {
+                    showExitDialog = false
+                    activity?.finish()
+                },
+                onDismiss = {
+                    showExitDialog = false
+                }
+            )
+        }
     }
 }
 
@@ -118,6 +140,29 @@ fun LogoutConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
         },
         text = {
             Text("Are you sure you want to logout?")
+        }
+    )
+}
+
+@Composable
+fun ExitConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("Exit")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+        title = {
+            Text(text = "Exit")
+        },
+        text = {
+            Text("Are you sure you want to exit the app?")
         }
     )
 }

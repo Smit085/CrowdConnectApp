@@ -45,7 +45,7 @@ import com.google.firebase.FirebaseException
 import java.util.concurrent.TimeUnit
 
 @Composable
-fun LoginScreen(authViewModel: AuthViewModel, navController: NavHostController) {
+fun LoginScreen(navController: NavHostController) {
     val context = LocalContext.current
     var phoneNumber by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
@@ -115,20 +115,30 @@ fun LoginScreen(authViewModel: AuthViewModel, navController: NavHostController) 
 }
 
 fun hideKeyboard(context: Context) {
-    val inputMethodManager = context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+    val inputMethodManager =
+        context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
     inputMethodManager.hideSoftInputFromWindow((context as Activity).currentFocus?.windowToken, 0)
 }
 
-fun sendOtp(context: Context, phoneNumber: String, auth: FirebaseAuth, onOtpSent: (String) -> Unit) {
+fun sendOtp(
+    context: Context,
+    phoneNumber: String,
+    auth: FirebaseAuth,
+    onOtpSent: (String) -> Unit
+) {
     val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
         override fun onVerificationCompleted(credential: PhoneAuthCredential) {}
 
         override fun onVerificationFailed(e: FirebaseException) {
             Log.e(TAG, "onVerificationFailed: ${e.message}", e)
-            Toast.makeText(context, "Failed to send OTP. Please try again.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Failed to send OTP. Please try again.", Toast.LENGTH_SHORT)
+                .show()
         }
 
-        override fun onCodeSent(verificationId: String, token: PhoneAuthProvider.ForceResendingToken) {
+        override fun onCodeSent(
+            verificationId: String,
+            token: PhoneAuthProvider.ForceResendingToken
+        ) {
             onOtpSent(verificationId)
         }
     }
@@ -150,6 +160,7 @@ private fun OutlinedTextFieldWithIcon(
 ) {
     val maxLength = 10
     val textFieldValue = remember { mutableStateOf(value) }
+    val context = LocalContext.current
 
     Row(
         horizontalArrangement = Arrangement.Center,
@@ -163,6 +174,9 @@ private fun OutlinedTextFieldWithIcon(
                     textFieldValue.value = it
                     onValueChange(it)
                 }
+                if (it.length == maxLength) {
+                    hideKeyboard(context)
+                }
             },
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = Color(0xFF1679AB),
@@ -174,7 +188,7 @@ private fun OutlinedTextFieldWithIcon(
                 imeAction = ImeAction.Done
             ),
             textStyle = TextStyle(fontSize = 18.sp),
-            keyboardActions = KeyboardActions(onDone = { }),
+            keyboardActions = KeyboardActions(onDone = { /* Handle Done action if needed */ }),
             maxLines = 1,
             modifier = Modifier
                 .padding()
@@ -207,3 +221,4 @@ private fun OutlinedTextFieldWithIcon(
         )
     }
 }
+

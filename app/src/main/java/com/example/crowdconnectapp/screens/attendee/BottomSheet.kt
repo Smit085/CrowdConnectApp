@@ -2,9 +2,13 @@ package com.example.crowdconnectapp.screens.attendee
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
 import android.util.Size
+import android.view.MotionEvent
+import android.view.ScaleGestureDetector
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -14,15 +18,23 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -33,7 +45,6 @@ import com.example.crowdconnectapp.components.qrcode.QrCodeAnalyzer
 import com.google.common.util.concurrent.ListenableFuture
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomSheet(navController: NavController) {
     var inputText by rememberSaveable { mutableStateOf("") }
@@ -88,10 +99,10 @@ fun BottomSheet(navController: NavController) {
                     ) {
                         CameraPreview(
                             cameraProviderFuture = cameraProviderFuture,
-                            lifecycleOwner = lifecycleOwner
+                            lifecycleOwner = lifecycleOwner,
+                            navController = navController
                         ) { result ->
                             code = result
-                            // Navigate to a new screen after scanning the code
                             if (code.isNotEmpty()) {
                                 navController.navigate("startSession/$code")
                             } else {
@@ -99,12 +110,6 @@ fun BottomSheet(navController: NavController) {
                             }
                         }
                         Spacer(modifier = Modifier.height(4.dp))
-//                        Text(
-//                            text = "Code: $code",
-//                            style = MaterialTheme.typography.bodyMedium,
-//                            fontWeight = FontWeight.Bold,
-//                            textAlign = TextAlign.Center,
-//                        )
                     }
                 }
                 InputSection(
@@ -131,10 +136,14 @@ fun BottomSheet(navController: NavController) {
 fun CameraPreview(
     cameraProviderFuture: ListenableFuture<ProcessCameraProvider>,
     lifecycleOwner: LifecycleOwner,
+    navController: NavController,
     onCodeScanned: (String) -> Unit
 ) {
     val context = LocalContext.current
     val previewView = remember { PreviewView(context) }
+    var zoomRatio by remember { mutableStateOf(1f) }
+    var maxZoomRatio by remember { mutableStateOf(1f) }
+    var minZoomRatio by remember { mutableStateOf(1f) }
 
     DisposableEffect(lifecycleOwner) {
         val cameraProvider = cameraProviderFuture.get()
@@ -157,9 +166,32 @@ fun CameraPreview(
         })
 
         try {
-            cameraProvider.bindToLifecycle(
+            val camera = cameraProvider.bindToLifecycle(
                 lifecycleOwner, selector, preview, imageAnalysis
             )
+
+            val cameraControl = camera.cameraControl
+            val cameraInfo = camera.cameraInfo
+
+            minZoomRatio = cameraInfo.zoomState.value?.minZoomRatio ?: 1f
+            maxZoomRatio = cameraInfo.zoomState.value?.maxZoomRatio ?: 1f
+
+            val scaleGestureDetector = ScaleGestureDetector(context, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+                override fun onScale(detector: ScaleGestureDetector): Boolean {
+                    val scale = detector.scaleFactor
+                    val newZoomRatio = zoomRatio * scale
+                    if (newZoomRatio in minZoomRatio..maxZoomRatio) {
+                        zoomRatio = newZoomRatio
+                        cameraControl.setZoomRatio(zoomRatio)
+                    }
+                    return true
+                }
+            })
+
+            previewView.setOnTouchListener { _, event ->
+                scaleGestureDetector.onTouchEvent(event)
+                true
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -185,6 +217,10 @@ fun InputSection(
     btnText: String,
     onSubmit: () -> Unit
 ) {
+    val context = LocalContext.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusRequester = remember { FocusRequester() }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -194,17 +230,39 @@ fun InputSection(
     ) {
         if (manualCode) {
             OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester),
                 value = inputText,
-                onValueChange = onTitleChange,
+                onValueChange = {
+                    if (it.length <= 10) { // Ensure the length does not exceed 10
+                        onTitleChange(it)
+                        if (it.length == 10) {
+                            // Close keyboard when code length is 10
+                            keyboardController?.hide()
+                        }
+                    }
+                },
                 label = { Text("Enter Code") },
-                placeholder = { Text("Type here") }
+                placeholder = { Text("Type here") },
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        focusRequester.freeFocus()
+                        keyboardController?.hide()
+                    }
+                )
             )
         }
         Spacer(modifier = Modifier.height(8.dp))
         Button(
-            onClick = onSubmit,
-            shape = RectangleShape,
+            onClick = {
+                onSubmit()
+                keyboardController?.hide()
+            },
+            shape = RoundedCornerShape(5.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(text = btnText)

@@ -242,7 +242,7 @@ fun NumberPicker(
         ) {
             IconButton(
                 onClick = {
-                    number = if (number == 0) 0 else number - 10
+                    number = if (number == 0) 0 else number - 5
                     onNumberChanged(number)
                 }, modifier = Modifier.width(40.dp)
             ) {
@@ -258,7 +258,7 @@ fun NumberPicker(
             Text(text = "$number")
             IconButton(
                 onClick = {
-                    number += 10
+                    number += 5
                     onNumberChanged(number)
                 }, modifier = Modifier.width(40.dp)
             ) {

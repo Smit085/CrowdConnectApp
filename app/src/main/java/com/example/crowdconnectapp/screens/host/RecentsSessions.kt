@@ -1,7 +1,10 @@
 package com.example.crowdconnectapp.screens.host
 
 import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,8 +18,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material3.AlertDialog
@@ -34,20 +39,25 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Green
 import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.compose.ui.graphics.Color.Companion.White
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.crowdconnectapp.models.AuthViewModel
+import com.example.crowdconnectapp.models.getAvatarResource
 import com.example.crowdconnectapp.ui.theme.Blue
 import com.example.crowdconnectapp.ui.theme.Grey
 import com.google.firebase.auth.FirebaseAuth
@@ -64,7 +74,8 @@ import java.util.Locale
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecentsSessions() {
+fun RecentsSessions(authViewModel: AuthViewModel, navController: NavHostController) {
+    val userAvatar by authViewModel.userAvatar.collectAsState()
     Scaffold(topBar = {
         TopAppBar(
             title = { Text("Sessions") },
@@ -72,6 +83,32 @@ fun RecentsSessions() {
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 titleContentColor = MaterialTheme.colorScheme.primary,
             ),
+            navigationIcon = {
+                IconButton(
+                    onClick = {
+                        navController.popBackStack()
+                        navController.navigate("hostScreen")
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back"
+                    )
+                }
+            },
+            actions = {
+                Image(
+                    painter = painterResource(id = getAvatarResource(userAvatar)),
+                    contentDescription = "User Avatar",
+                    modifier = Modifier
+                        .size(45.dp)
+                        .clip(CircleShape)
+                        .padding(end = 8.dp)
+                        .clickable {
+                            navController.navigate("updateProfileScreen")
+                        }
+                )
+            }
         )
     }) {
         var sessions by remember { mutableStateOf<List<PastSessions>?>(null) } // Nullable sessions
@@ -128,9 +165,12 @@ fun RecentsSessions() {
                                 SessionCard(session = session, onDeleteConfirmed = {
                                     deleteSession(session.id, onSuccess = {
                                         sessions = sessions?.filterNot { it.id == session.id }
-                                    }, onError = { e ->
+                                    }, onError = {
                                         // Handle error
                                     })
+                                }, onItemClick = {
+                                    // Navigate to a new screen showing details of responded attendees
+                                    navController.navigate("sessionResponses/${session.id}")
                                 })
                             }
                         }
@@ -139,6 +179,10 @@ fun RecentsSessions() {
             }
         }
 
+    }
+    BackHandler {
+        navController.popBackStack()
+        navController.navigate("hostScreen")
     }
 }
 
@@ -157,20 +201,18 @@ data class PastSessions(
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SessionCard(
-    session: PastSessions, onDeleteConfirmed: () -> Unit // Add onDeleteConfirmed lambda parameter
+    session: PastSessions, onDeleteConfirmed: () -> Unit, onItemClick: () -> Unit
 ) {
     var showDialog by remember { mutableStateOf(false) }
 
     Card(
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = White,
-        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
-            .padding(horizontal = 10.dp),
+            .padding(horizontal = 10.dp)
+            .clickable { onItemClick() },
     ) {
         Column(
             modifier = Modifier.padding(10.dp)
@@ -216,13 +258,13 @@ fun SessionCard(
                 Column {
                     Row {
                         Text(
-                            text = "Duration: ",
+                            text = "Duration/Question: ",
                             style = MaterialTheme.typography.labelLarge,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                         Text(
-                            text = "${session.duration} ${session.durationIn}",
+                            text = if (session.duration != 0) "${session.duration} ${session.durationIn}" else "No limit",
                             style = MaterialTheme.typography.bodyMedium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -304,7 +346,6 @@ fun isSessionLive(session: PastSessions): Boolean {
     }
     return false
 }
-
 
 
 @Composable

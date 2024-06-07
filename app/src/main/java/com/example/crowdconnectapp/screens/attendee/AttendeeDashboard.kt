@@ -1,8 +1,11 @@
 package com.example.crowdconnectapp.screens.attendee
 
 import android.annotation.SuppressLint
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.PhotoCamera
@@ -11,16 +14,20 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.crowdconnectapp.R
+import com.example.crowdconnectapp.models.AuthViewModel
+import com.example.crowdconnectapp.models.getAvatarResource
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AttendeeDashboard(navController: NavHostController) {
+fun AttendeeDashboard(navController: NavHostController, authViewModel: AuthViewModel) {
+    val userAvatar by authViewModel.userAvatar.collectAsState()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -28,7 +35,20 @@ fun AttendeeDashboard(navController: NavHostController) {
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.primary,
-                )
+                ),
+                actions = {
+                    Image(
+                        painter = painterResource(id = getAvatarResource(userAvatar)),
+                        contentDescription = "User Avatar",
+                        modifier = Modifier
+                            .size(45.dp)
+                            .clip(CircleShape)
+                            .padding(end = 8.dp)
+                            .clickable {
+                                navController.navigate("updateProfileScreen")
+                            }
+                    )
+                }
             )
         }
     ) {
@@ -67,12 +87,13 @@ fun AttendeeDashboard(navController: NavHostController) {
                 )
                 InfoRow(text = "Click on join session.")
                 InfoRow(text = "Scan qrcode or enter code manually.")
+                InfoRow(text = "Start the session.")
                 InfoRow(text = "Submit your response.")
                 InfoRow(text = "Review your score.")
             }
             Spacer(modifier = Modifier.height(24.dp))
             Button(
-                onClick = { isSheetOpen = true  },
+                onClick = { isSheetOpen = true },
                 shape = RoundedCornerShape(5.dp),
                 modifier = Modifier
                     .width(300.dp)
@@ -92,38 +113,11 @@ fun AttendeeDashboard(navController: NavHostController) {
             }
         }
     }
-}
-
-@Composable
-fun BottomSheetContent(navController: NavHostController) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = "Enter Session Code", style = MaterialTheme.typography.bodyMedium)
-        var code by remember { mutableStateOf("") }
-        OutlinedTextField(
-            value = code,
-            onValueChange = { code = it },
-            label = { Text("Session Code") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Button(
-            onClick = {
-                if (code.startsWith("QZ", true)) {
-                    navController.navigate("startQuiz")
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(text = "Submit")
-        }
+    BackHandler {
+        navController.popBackStack()
+        navController.navigate("welcomeScreen")
     }
 }
-
 @Composable
 fun InfoRow(text: String) {
     Row(

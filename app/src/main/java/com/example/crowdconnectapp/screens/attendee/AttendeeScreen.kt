@@ -1,6 +1,7 @@
 package com.example.crowdconnectapp.screens.attendee
 
 import android.annotation.SuppressLint
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,13 +32,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.crowdconnectapp.models.AuthViewModel
 import com.example.crowdconnectapp.screens.host.BottomNavigationItem
 import com.google.firebase.auth.FirebaseAuth
 
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun AttendeeScreen(navController: NavHostController) {
+fun AttendeeScreen(authViewModel: AuthViewModel,navController: NavHostController,) {
     var selectedItemIndex by rememberSaveable {
         mutableIntStateOf(0)
     }
@@ -117,8 +119,8 @@ fun AttendeeScreen(navController: NavHostController) {
                 val currentUser = FirebaseAuth.getInstance().currentUser
                 val attendeeId = currentUser?.phoneNumber ?: ""
                 when(selectedItemIndex) {
-                    0 -> { AttendeeDashboard(navController) }
-                    1 -> { RecentsSessions(attendeeId) }
+                    0 -> { AttendeeDashboard(navController,authViewModel) }
+                    1 -> { RecentsSessions(attendeeId,authViewModel,navController) }
                     2 ->  { Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Absolute.SpaceEvenly,

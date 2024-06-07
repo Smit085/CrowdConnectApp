@@ -39,11 +39,14 @@ fun AttendQuiz(navController: NavController) {
     val quizViewModel: QuizViewModel = hiltViewModel()
     val questions by quizViewModel.questions.collectAsState()
     val isLoading by quizViewModel.isLoading.collectAsState()
+    val isShuffleQuestionsEnabled = quizViewModel.isShuffleQuestionsEnabled
+    val isShuffleOptionsEnabled = quizViewModel.isShuffleOptionsEnabled
     val duration = quizViewModel.duration
     val durationIn = quizViewModel.durationIn
     val isDurationEnabled = quizViewModel.isDurationEnabled
     val context = LocalContext.current
 
+    Log.i("AttendQuiz",questions.toString())
     val totalTime = when (durationIn) {
         "sec" -> duration * 1L
         "min" -> duration * 60L
@@ -57,21 +60,46 @@ fun AttendQuiz(navController: NavController) {
     var selectedOption by remember { mutableStateOf("") }
     var userResponses by remember { mutableStateOf(mutableListOf<UserResponse>()) }
 
+    // Initialize the shuffled questions and options
+    val shuffledQuestions =
+        remember(questions, isShuffleQuestionsEnabled, isShuffleOptionsEnabled) {
+            if (isShuffleQuestionsEnabled) {
+                questions.shuffled().map { question ->
+                    question to (if (isShuffleOptionsEnabled) question.options.shuffled() else question.options)
+                }
+            } else {
+                questions.map { question ->
+                    question to (if (isShuffleOptionsEnabled) question.options.shuffled() else question.options)
+                }
+            }
+        }
+
+    val currentQuestionPair = shuffledQuestions.getOrNull(currentQuestionIndex)
+    val currentQuestion = currentQuestionPair?.first
+    val currentOptions = currentQuestionPair?.second ?: emptyList()
+
     fun saveAnswer() {
-        val question = questions.getOrNull(currentQuestionIndex) ?: return
-        val response = UserResponse(currentQuestionIndex, question.options.indexOf(selectedOption))
-        userResponses.removeAll { it.questionIndex == currentQuestionIndex }
-        userResponses.add(response)
+        val question = currentQuestion ?: return
+        val selectedOptionIndex = currentOptions.indexOf(selectedOption)
+        if (selectedOptionIndex != -1) {
+            val response = UserResponse(currentQuestionIndex, selectedOptionIndex)
+            userResponses.removeAll { it.questionIndex == currentQuestionIndex }
+            userResponses.add(response)
+        }
+    }
+
+    fun loadSelectedOption() {
+        val response = userResponses.find { it.questionIndex == currentQuestionIndex }
+        selectedOption = response?.let { currentOptions.getOrNull(it.selectedOptionIndex) } ?: ""
     }
 
     fun nextQuestion() {
         saveAnswer()
-        if (currentQuestionIndex < questions.size - 1) {
+        if (currentQuestionIndex < shuffledQuestions.size - 1) {
             currentQuestionIndex += 1
             timeProgress = 0f
             remainingTime = totalTime
-            val nextResponse = userResponses.find { it.questionIndex == currentQuestionIndex }
-            selectedOption = nextResponse?.let { questions[currentQuestionIndex].options[it.selectedOptionIndex] } ?: ""
+            loadSelectedOption()
         }
     }
 
@@ -81,8 +109,7 @@ fun AttendQuiz(navController: NavController) {
             currentQuestionIndex -= 1
             timeProgress = 0f
             remainingTime = totalTime
-            val prevResponse = userResponses.find { it.questionIndex == currentQuestionIndex }
-            selectedOption = prevResponse?.let { questions[currentQuestionIndex].options.getOrNull(it.selectedOptionIndex) } ?: ""
+            loadSelectedOption()
         }
     }
 
@@ -101,7 +128,9 @@ fun AttendQuiz(navController: NavController) {
         }
     }
 
-    val currentQuestion = questions.getOrNull(currentQuestionIndex)
+    LaunchedEffect(currentQuestionIndex) {
+        loadSelectedOption()
+    }
 
     Scaffold(
         topBar = {
@@ -112,7 +141,11 @@ fun AttendQuiz(navController: NavController) {
                     titleContentColor = MaterialTheme.colorScheme.primary,
                 ),
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigate("attendeeScreen") }) {
+                    IconButton(onClick = {
+                        navController.navigate("attendeeScreen") {
+                            navController.popBackStack()
+                        }
+                    }) {
                         Icon(imageVector = Icons.Default.Close, contentDescription = "close")
                     }
                 }
@@ -163,7 +196,7 @@ fun AttendQuiz(navController: NavController) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Question ${currentQuestionIndex + 1}/${questions.size}",
+                            text = "Question ${currentQuestionIndex + 1}/${shuffledQuestions.size}",
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleLarge
                         )
@@ -179,7 +212,7 @@ fun AttendQuiz(navController: NavController) {
                             }
                             IconButton(
                                 onClick = { nextQuestion() },
-                                enabled = currentQuestionIndex < questions.size - 1
+                                enabled = currentQuestionIndex < shuffledQuestions.size - 1
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.KeyboardArrowRight,
@@ -204,7 +237,7 @@ fun AttendQuiz(navController: NavController) {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                        question.options.forEachIndexed { index, option ->
+                        currentOptions.forEachIndexed { index, option ->
                             val optionLetter = ('A' + index).toString()
                             Card(
                                 modifier = Modifier
@@ -236,16 +269,16 @@ fun AttendQuiz(navController: NavController) {
                                     Text(
                                         text = option,
                                         fontSize = 14.sp,
-                                        fontWeight = FontWeight.Normal,
-                                        textAlign = TextAlign.Justify,
-                                        modifier = Modifier.weight(1f)
+                                        color = Color.Black,
+                                        style = MaterialTheme.typography.bodyMedium
                                     )
                                 }
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
+
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -256,29 +289,35 @@ fun AttendQuiz(navController: NavController) {
                             shape = RoundedCornerShape(5.dp),
                             modifier = Modifier.width(350.dp),
                             onClick = {
-                                if (currentQuestionIndex == questions.size - 1) {
+                                if (currentQuestionIndex == shuffledQuestions.size - 1) {
                                     saveAnswer()
-                                    if (userResponses.size == questions.size) {
-                                        val currentUser = FirebaseAuth.getInstance().currentUser
-                                        val attendeeId = currentUser?.phoneNumber ?: ""
+                                    if (userResponses.size == shuffledQuestions.size) {
                                         submitResponses(
-                                            attendeeId = attendeeId,
-                                            name = "Smit",
                                             responses = userResponses,
-                                            mobno = attendeeId,
                                             sessionId = quizViewModel.sessioncode,
                                             onSuccess = {
-                                                Toast.makeText(context, "Your response has been submitted.", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(
+                                                    context,
+                                                    "Your response has been submitted.",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
                                                 navController.navigate("attendeeScreen")
                                             },
                                             onFailure = { exception ->
-                                                Log.e("SubmitError", "Error submitting responses", exception)
+                                                Log.e(
+                                                    "SubmitError",
+                                                    "Error submitting responses",
+                                                    exception
+                                                )
                                             }
                                         )
                                     } else {
-                                        Toast.makeText(context, "Please answer all questions before submitting.", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(
+                                            context,
+                                            "Please answer all questions before submitting.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                     }
-
                                 } else {
                                     nextQuestion()
                                 }
@@ -286,7 +325,7 @@ fun AttendQuiz(navController: NavController) {
                             enabled = selectedOption.isNotBlank()
                         ) {
                             Text(
-                                text = if (currentQuestionIndex == questions.size - 1) "Submit" else "Continue",
+                                text = if (currentQuestionIndex == shuffledQuestions.size - 1) "Submit" else "Continue",
                                 style = MaterialTheme.typography.titleMedium
                             )
                         }

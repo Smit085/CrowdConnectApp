@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
-data class Question(val question: String, val options: List<String>, val correctAnswerIndex: Int)
+data class Question(val question: String = "", val options: List<String> = emptyList(), val correctAnswerIndex: Int = -1)
 
 class QuizViewModel @Inject constructor() : ViewModel() {
     private val _questions = MutableStateFlow<List<Question>>(emptyList())
