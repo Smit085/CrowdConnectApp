@@ -46,7 +46,7 @@ fun AttendQuiz(navController: NavController) {
     val isDurationEnabled = quizViewModel.isDurationEnabled
     val context = LocalContext.current
 
-    Log.i("AttendQuiz",questions.toString())
+    Log.i("AttendQuiz", questions.toString())
     val totalTime = when (durationIn) {
         "sec" -> duration * 1L
         "min" -> duration * 60L
@@ -132,6 +132,35 @@ fun AttendQuiz(navController: NavController) {
         loadSelectedOption()
     }
 
+    var showDialog by remember { mutableStateOf(false) }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text(text = "Exit Quiz") },
+            text = { Text(text = "Are you sure you want to exit the quiz? Your progress will be lost.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDialog = false
+                        navController.navigate("attendeeScreen") {
+                            navController.popBackStack()
+                        }
+                    }
+                ) {
+                    Text("Yes")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDialog = false }
+                ) {
+                    Text("No")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -141,11 +170,7 @@ fun AttendQuiz(navController: NavController) {
                     titleContentColor = MaterialTheme.colorScheme.primary,
                 ),
                 navigationIcon = {
-                    IconButton(onClick = {
-                        navController.navigate("attendeeScreen") {
-                            navController.popBackStack()
-                        }
-                    }) {
+                    IconButton(onClick = { showDialog = true }) {
                         Icon(imageVector = Icons.Default.Close, contentDescription = "close")
                     }
                 }

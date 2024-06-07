@@ -47,7 +47,11 @@ data class Response(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecentsSessions(attendeeId: String, authViewModel: AuthViewModel, navController: NavHostController) {
+fun RecentsSessions(
+    attendeeId: String,
+    authViewModel: AuthViewModel,
+    navController: NavHostController
+) {
     val userAvatar by authViewModel.userAvatar.collectAsState()
     Scaffold(topBar = {
         TopAppBar(
@@ -95,7 +99,7 @@ fun RecentsSessions(attendeeId: String, authViewModel: AuthViewModel, navControl
                 val updatedSessions = mutableListOf<AtendeeSession>()
 
                 fetchedSessions.forEachIndexed { index, session ->
-                    val (title, questions,isEvaluateEnabled) = fetchSessionData(session.sessionId)
+                    val (title, questions, isEvaluateEnabled) = fetchSessionData(session.sessionId)
                     val updatedSession = session.copy(
                         title = title,
                         isEvaluateEnabled = isEvaluateEnabled,
@@ -144,16 +148,11 @@ fun RecentsSessions(attendeeId: String, authViewModel: AuthViewModel, navControl
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-
-                    Box(
-                        modifier = Modifier.fillMaxSize()
+                    LazyColumn(
+                        contentPadding = PaddingValues(bottom = 70.dp)
                     ) {
-                        LazyColumn(
-                            contentPadding = PaddingValues(bottom = 70.dp)
-                        ) {
-                            items(attendedSessionsList) { session ->
-                                SessionCard(session)
-                            }
+                        items(attendedSessionsList) { session ->
+                            SessionCard(session)
                         }
                     }
                 }
@@ -183,9 +182,6 @@ fun calculateScore(responses: List<Response>, questions: List<Question>): Int {
 fun SessionCard(session: AtendeeSession) {
     Card(
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White,
-        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier
             .fillMaxWidth()
@@ -219,7 +215,6 @@ fun SessionCard(session: AtendeeSession) {
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
-                        // Display score or placeholder based on isEvaluateEnabled flag
                         Text(
                             text = if (session.isEvaluateEnabled) "${session.score}/${session.responses.size}" else "-/:",
                             style = MaterialTheme.typography.bodyMedium,

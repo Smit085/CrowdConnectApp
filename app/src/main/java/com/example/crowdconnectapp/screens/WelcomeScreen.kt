@@ -47,7 +47,6 @@ fun WelcomeScreen(navController: NavHostController, authViewModel: AuthViewModel
                     .size(100.dp)
                     .clip(MaterialTheme.shapes.medium)
             )
-
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(

@@ -40,6 +40,7 @@ fun StartQuiz(navController: NavController, qrcode: String) {
     var isQuizStarted by remember { mutableStateOf(false) }
     var isQuizNotStarted by remember { mutableStateOf(false) }
     var isQuizActive by remember { mutableStateOf(false) }
+    var showDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(qrcode, selectedDate, selectedTime) {
         quizViewModel.fetchSessionData(qrcode)
@@ -83,8 +84,7 @@ fun StartQuiz(navController: NavController, qrcode: String) {
                     ),
                     navigationIcon = {
                         IconButton(onClick = {
-                            navController.popBackStack()
-                            navController.navigate("attendeeScreen")
+                            showDialog = true
                         }) {
                             Icon(
                                 imageVector = Icons.Default.Close,
@@ -219,11 +219,36 @@ fun StartQuiz(navController: NavController, qrcode: String) {
             }
         )
     }
-    if (isQuizStarted){
+
+    if (isQuizStarted) {
         AttendQuiz(navController)
     }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDialog = false
+                    navController.navigate("attendeeScreen") {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
+                    }
+                }) {
+                    Text("Yes")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("No")
+                }
+            },
+            title = { Text("Confirm") },
+            text = { Text("Are you sure you want to leave the quiz?") }
+        )
+    }
+
     BackHandler {
-        navController.popBackStack()
-        navController.navigate("attendeeScreen")
+        showDialog = true
     }
 }

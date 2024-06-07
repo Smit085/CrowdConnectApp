@@ -217,7 +217,6 @@ fun InputSection(
     btnText: String,
     onSubmit: () -> Unit
 ) {
-    val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
 
@@ -235,10 +234,9 @@ fun InputSection(
                     .focusRequester(focusRequester),
                 value = inputText,
                 onValueChange = {
-                    if (it.length <= 10) { // Ensure the length does not exceed 10
+                    if (it.length <= 10) {
                         onTitleChange(it)
                         if (it.length == 10) {
-                            // Close keyboard when code length is 10
                             keyboardController?.hide()
                         }
                     }

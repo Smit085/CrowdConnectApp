@@ -111,8 +111,8 @@ fun RecentsSessions(authViewModel: AuthViewModel, navController: NavHostControll
             }
         )
     }) {
-        var sessions by remember { mutableStateOf<List<PastSessions>?>(null) } // Nullable sessions
-        var isLoading by remember { mutableStateOf(true) } // Loading state
+        var sessions by remember { mutableStateOf<List<PastSessions>?>(null) }
+        var isLoading by remember { mutableStateOf(true) }
         val currentUser = FirebaseAuth.getInstance().currentUser
         val hostId = currentUser?.phoneNumber ?: ""
 
@@ -123,7 +123,7 @@ fun RecentsSessions(authViewModel: AuthViewModel, navController: NavHostControll
             }
         }
 
-        if (isLoading) { // Show loading indicator if data is still loading
+        if (isLoading) {
             CircularProgressIndicator(
                 modifier = Modifier
                     .fillMaxSize()
@@ -131,7 +131,7 @@ fun RecentsSessions(authViewModel: AuthViewModel, navController: NavHostControll
                     .wrapContentSize(Alignment.Center)
             )
         } else {
-            if (sessions.isNullOrEmpty()) { // Check if the session list is empty or null
+            if (sessions.isNullOrEmpty()) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.Center,
@@ -144,7 +144,6 @@ fun RecentsSessions(authViewModel: AuthViewModel, navController: NavHostControll
                     )
                 }
             } else {
-                // Display sessions
                 sessions?.let { sessionList ->
                     Column(
                         modifier = Modifier
@@ -169,7 +168,6 @@ fun RecentsSessions(authViewModel: AuthViewModel, navController: NavHostControll
                                         // Handle error
                                     })
                                 }, onItemClick = {
-                                    // Navigate to a new screen showing details of responded attendees
                                     navController.navigate("sessionResponses/${session.id}")
                                 })
                             }
@@ -222,10 +220,9 @@ fun SessionCard(
                     imageVector = Icons.Default.Quiz,
                     contentDescription = "Session Icon",
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(35.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-
                 Text(
                     text = session.title,
                     style = MaterialTheme.typography.titleMedium,
