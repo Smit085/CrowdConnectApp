@@ -155,7 +155,7 @@ suspend fun fetchAttendedSessions(attendeeId: String): List<AtendeeSession> {
                 }
                 AtendeeSession(
                     sessionId = sessionId,
-                    title = "", // Initially empty, fetched later
+                    title = "",
                     isEvaluateEnabled = false,
                     responses = responses,
                     date = sessionData["date"] as? String ?: "",
