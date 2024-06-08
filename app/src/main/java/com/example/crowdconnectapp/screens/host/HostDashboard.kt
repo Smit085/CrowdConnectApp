@@ -108,7 +108,7 @@ fun SessionList(sessions: List<Session>, navController: NavHostController) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 fun SessionCard(session: Session, navController: NavHostController) {
     Card(

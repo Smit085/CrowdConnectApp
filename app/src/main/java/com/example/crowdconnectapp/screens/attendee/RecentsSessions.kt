@@ -252,4 +252,3 @@ fun SessionCard(session: AtendeeSession) {
         }
     }
 }
-

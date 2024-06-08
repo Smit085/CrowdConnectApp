@@ -117,7 +117,7 @@ fun SessionResponses(
                             .clip(CircleShape)
                             .padding(end = 8.dp)
                             .clickable {
-                                // Handle avatar click
+                                navController.navigate("updateProfileScreen")
                             }
                     )
                 }
@@ -291,7 +291,13 @@ fun SessionResponses(
                         fontWeight = FontWeight.W400
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    AttendeesTable(attendees)
+                    if (attendees.isEmpty()) {
+                        Row(horizontalArrangement = Arrangement.Center) {
+                            Text(text = "No response yet!")
+                        }
+                    } else {
+                        AttendeesTable(attendees)
+                    }
                 }
             }
         } ?: run {
@@ -414,10 +420,12 @@ class SessionRepository {
                 var timeout = document.getLong("timeout") ?: 0L
                 val timeoutIn = document.getString("timeoutIn") ?: ""
                 timeout = if (timeoutIn == "min") timeout else timeout * 60
-                val questions = (document.get("questions") as? List<Map<String, Any>> ?: emptyList()).mapNotNull { questionData ->
+                val questions = (document.get("questions") as? List<Map<String, Any>>
+                    ?: emptyList()).mapNotNull { questionData ->
                     val question = questionData["question"] as? String ?: return@mapNotNull null
                     val options = questionData["options"] as? List<String> ?: return@mapNotNull null
-                    val correctAnswerIndex = (questionData["correctAnswerIndex"] as? Long)?.toInt() ?: return@mapNotNull null
+                    val correctAnswerIndex = (questionData["correctAnswerIndex"] as? Long)?.toInt()
+                        ?: return@mapNotNull null
                     Question(question, options, correctAnswerIndex)
                 }
                 SessionDetails(title, description, selectedDate, selectedTime, timeout, questions)
@@ -505,7 +513,8 @@ class SessionViewModel : ViewModel() {
     fun calculateTimeLeft(session: SessionDetails): String {
         return try {
             val dateTimeFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-            val quizStartDateTime = dateTimeFormat.parse("${session.selectedDate} ${session.selectedTime}")
+            val quizStartDateTime =
+                dateTimeFormat.parse("${session.selectedDate} ${session.selectedTime}")
 
             val endTime = Calendar.getInstance().apply {
                 time = quizStartDateTime!!

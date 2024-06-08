@@ -75,7 +75,7 @@ fun UserOnboardingScreen(navController: NavHostController, authViewModel: AuthVi
                 }
             },
             placeholder = { Text("Enter your name") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(), maxLines = 1
         )
         Spacer(modifier = Modifier.height(26.dp))
         Text(

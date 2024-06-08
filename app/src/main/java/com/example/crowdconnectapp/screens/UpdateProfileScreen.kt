@@ -18,6 +18,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -26,7 +28,8 @@ import com.example.crowdconnectapp.models.AuthViewModel
 
 @Composable
 fun UpdateProfileScreen(navController: NavHostController, authViewModel: AuthViewModel) {
-    var name by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf(authViewModel.userName.value) }
+    var newname by remember { mutableStateOf(authViewModel.userName.value) }
     var selectedAvatarIndex by remember { mutableStateOf(authViewModel.userAvatar.value) }
     var selectedGender by remember { mutableStateOf(authViewModel.userGender.value) }
     val context = LocalContext.current
@@ -49,40 +52,47 @@ fun UpdateProfileScreen(navController: NavHostController, authViewModel: AuthVie
             horizontalAlignment = Alignment.Start
         ) {
             Text(
-                modifier = Modifier.padding(vertical = 20.dp),
+                modifier = Modifier.padding(top = 40.dp),
                 text = "Update Profile",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Medium
             )
             Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = "Edit your profile details",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.W500
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-
-            // Input fields for name and gender
+            Row {
+                Text(
+                    text = "Let's update your profile ",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.W400
+                )
+                Text(
+                    text = "\"${name.toUpperCase()}\"",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Spacer(modifier = Modifier.height(24.dp))
             Text(
                 text = "Name",
                 maxLines = 1,
-                fontWeight = FontWeight.W500
+                fontWeight = FontWeight.W400
             )
             Spacer(modifier = Modifier.height(4.dp))
             OutlinedTextField(
-                value = name,
+                value = newname,
                 onValueChange = {
                     if (it.length <= maxNameLength) {
-                        name = it
+                        newname = it
                     }
                 },
-                placeholder = { Text("Enter your name") },
+                placeholder = { Text("Enter your new name") },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(26.dp))
             Text(
                 text = "Select your gender:",
-                fontWeight = FontWeight.W500
+                fontWeight = FontWeight.W400
             )
             Spacer(modifier = Modifier.height(4.dp))
             Row {
@@ -101,7 +111,7 @@ fun UpdateProfileScreen(navController: NavHostController, authViewModel: AuthVie
             Spacer(modifier = Modifier.height(26.dp))
             Text(
                 text = "Select your avatar:",
-                fontWeight = FontWeight.W500
+                fontWeight = FontWeight.W400
             )
             Spacer(modifier = Modifier.height(4.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -119,9 +129,9 @@ fun UpdateProfileScreen(navController: NavHostController, authViewModel: AuthVie
                 shape = RoundedCornerShape(5.dp),
                 modifier = Modifier.width(350.dp),
                 onClick = {
-                    if (name.isNotEmpty() && selectedGender.isNotEmpty()) {
+                    if (newname.isNotEmpty() && selectedGender.isNotEmpty()) {
                         // Update profile info
-                        authViewModel.updateProfile(name, selectedAvatarIndex, selectedGender,
+                        authViewModel.updateProfile(newname, selectedAvatarIndex, selectedGender,
                             onSucess = {
                                 navController.navigate("hostScreen") {
                                     popUpTo("updateProfileScreen") { inclusive = true }
@@ -137,7 +147,7 @@ fun UpdateProfileScreen(navController: NavHostController, authViewModel: AuthVie
                         // Handle form validation
                     }
                 },
-                enabled = name.isNotEmpty() && selectedAvatarIndex != null && selectedGender.isNotEmpty(),
+                enabled = newname.isNotEmpty() && selectedAvatarIndex != null && selectedGender.isNotEmpty(),
             ) {
                 Text(
                     text = "Update Profile",
